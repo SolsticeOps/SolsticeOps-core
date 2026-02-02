@@ -1,0 +1,96 @@
+<div id="tool-status-container" {% if tool.status == 'installing' %}hx-get="{% url 'tool_detail' tool.name %}?tab=status" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h6 class="fw-bold mb-0">Deployment Status</h6>
+        <span class="badge rounded-pill {% if tool.status == 'installed' %}bg-success text-white{% elif tool.status == 'installing' %}bg-warning text-dark{% elif tool.status == 'error' %}bg-danger text-white{% else %}bg-light text-muted border{% endif %} px-3">
+            <i class="bi bi-circle-fill me-1 small"></i> {{ tool.get_status_display }}
+        </span>
+    </div>
+
+    {% if tool.status == 'not_installed' %}
+    <div class="alert alert-info py-4 text-center">
+        <i class="bi bi-info-circle h1 d-block mb-3"></i>
+        <h4>{{ tool.get_name_display }} is not installed</h4>
+        <p class="text-muted">This service is not yet configured on your server. {% if tool.name == 'jenkins' %}Configure and install it below.{% else %}Click the button below to start the installation process.{% endif %}</p>
+        
+        {% if tool.name == 'jenkins' %}
+        <div class="card bg-dark text-start border-secondary mt-4 mx-auto" style="max-width: 500px;">
+            <div class="card-body p-4">
+                <form action="{% url 'install_jenkins' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label text-light">HTTP Port</label>
+                        <input type="number" name="port" class="form-control bg-dark text-light border-secondary" value="8080">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">JNLP Port</label>
+                        <input type="number" name="jnlp_port" class="form-control bg-dark text-light border-secondary" value="50000">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Volume Name</label>
+                        <input type="text" name="volume_name" class="form-control bg-dark text-light border-secondary" value="jenkins_home">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Container Name</label>
+                        <input type="text" name="container_name" class="form-control bg-dark text-light border-secondary" value="jenkins">
+                    </div>
+                    <div class="mb-4">
+                        <div class="form-check form-switch d-flex align-items-center">
+                            <input class="form-check-input" type="checkbox" name="privileged" id="privilegedCheck" style="cursor: pointer; width: 2.5em; height: 1.25em; float: none;" onclick="event.stopPropagation()">
+                            <label class="form-check-label text-light ms-3" for="privilegedCheck" style="cursor: pointer;" onclick="event.stopPropagation()">Privileged Mode</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="bi bi-download me-2"></i> Install Jenkins
+                    </button>
+                </form>
+                <div class="text-center mt-3">
+                    <hr class="border-secondary opacity-25">
+                    <p class="text-muted small">Already have Jenkins running?</p>
+                    <a href="{% url 'find_jenkins' %}" class="btn btn-outline-secondary btn-sm w-100">
+                        <i class="bi bi-search me-2"></i> Find Existing Jenkins
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <a href="{% url 'install_tool' tool.name %}" class="btn btn-primary btn-lg mt-3 px-5">
+            <i class="bi bi-download me-2"></i> Install {{ tool.get_name_display }}
+        </a>
+        {% endif %}
+    </div>
+    {% elif tool.status == 'installing' %}
+    <div class="alert alert-warning py-4 text-center bg-warning bg-opacity-10 border-warning">
+        <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4 class="text-warning-emphasis fw-bold">Installing {{ tool.get_name_display }}...</h4>
+        <p class="fw-bold mb-1 text-dark-emphasis">Current Stage: <span class="text-warning-emphasis">{{ tool.current_stage }}</span></p>
+        <p class="text-muted small mb-0">Please wait, the page will update automatically when the stage changes.</p>
+    </div>
+    {% elif tool.status == 'error' %}
+    <div class="alert alert-danger py-4 text-center">
+        <i class="bi bi-exclamation-triangle h1 d-block mb-3"></i>
+        <h4>Installation Failed</h4>
+        <p class="text-muted">Something went wrong during the installation of {{ tool.get_name_display }}.</p>
+        {% if tool.config_data.error_log %}
+        <div class="text-start mt-3">
+            <h6>Error Log:</h6>
+            <pre class="bg-dark text-light p-3 rounded small">{{ tool.config_data.error_log }}</pre>
+        </div>
+        {% endif %}
+        {% if tool.name == 'jenkins' %}
+        <a href="{% url 'tool_detail' tool.name %}" class="btn btn-danger mt-3">Try Again</a>
+        {% else %}
+        <a href="{% url 'install_tool' tool.name %}" class="btn btn-danger mt-3">Try Again</a>
+        {% endif %}
+    </div>
+    {% elif tool.status == 'installed' %}
+    <div class="alert alert-success d-flex align-items-center mb-0 mt-auto">
+        <i class="bi bi-check-circle-fill me-3 h4 mb-0"></i>
+        <div>
+            <strong>Service is running!</strong> {{ tool.get_name_display }} version {{ tool.version|default:"latest" }} is currently installed and operational.
+        </div>
+    </div>
+    
+    {% endif %}
+</div>

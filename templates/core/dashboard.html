@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-5">
+    <h1 class="h3 fw-bold tracking-tight mb-1">Infrastructure</h1>
+    <p class="text-muted small">Real-time system health and resource utilization.</p>
+</div>
+
+<!-- Dynamic Stats Section -->
+<div class="row g-4" hx-get="{% url 'server_stats_partial' %}" hx-trigger="every 3s">
+    {% include 'core/partials/stats.html' with stats=stats %}
+</div>
+
+<!-- Hardware & System Info -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-cpu-fill me-2 text-primary"></i>Hardware & System Specifications</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <table class="table table-borderless mb-0">
+                            <tr>
+                                <th class="text-muted fw-normal">OS</th>
+                                <td>{{ server_info.os }} ({{ server_info.os_release }})</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted fw-normal">CPU</th>
+                                <td>{{ server_info.cpu_brand }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted fw-normal">Cores / Threads</th>
+                                <td>{{ server_info.cpu_count }} Cores / {{ server_info.cpu_threads }} Threads</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted fw-normal">Total RAM</th>
+                                <td>{{ server_info.ram_total }} GB</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted fw-normal">Motherboard</th>
+                                <td>{{ server_info.motherboard }}</td>
+                            </tr>
+                            {% if server_info.ram_slots %}
+                            <tr>
+                                <th class="text-muted fw-normal">RAM Slots</th>
+                                <td>
+                                    {% for slot in server_info.ram_slots %}
+                                        <span class="badge bg-secondary me-1">{{ slot.size }} ({{ slot.speed }})</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

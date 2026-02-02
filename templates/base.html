@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolsticeOps - {% block title %}Dashboard{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-icons-font@v13/font/simple-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        })();
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap');
+
+        :root {
+            --sidebar-bg: #09090b;
+            --main-bg: #ffffff;
+            --border: #e4e4e7;
+            --muted: #71717a;
+            --accent: #18181b;
+            --accent-foreground: #ffffff;
+            --card-bg: #ffffff;
+            --text-main: #09090b;
+            --table-header: #f8f9fa;
+            --icon-box: #f4f4f5;
+        }
+
+        [data-bs-theme="dark"] {
+            --main-bg: #09090b;
+            --border: #1e1e21;
+            --muted: #71717a;
+            --accent: #ffffff;
+            --accent-foreground: #000000;
+            --card-bg: #0c0c0e;
+            --text-main: #e4e4e7;
+            --table-header: #141417;
+            --icon-box: #18181b;
+        }
+
+        body {
+            background-color: var(--main-bg);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            padding: 0 !important;
+        }
+        .sidebar-brand {
+            padding: 2rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+        }
+        .nav-link {
+            color: #a1a1aa !important;
+            padding: 0.5rem 1rem !important;
+            margin: 0.25rem 0.75rem;
+            display: flex;
+            align-items: center;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.1s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff !important;
+            background-color: #27272a;
+        }
+        .nav-link i {
+            margin-right: 0.75rem;
+            font-size: 1rem;
+        }
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #52525b;
+            padding: 1.5rem 1.75rem 0.5rem;
+            text-transform: uppercase;
+        }
+        .main-content {
+            padding: 3rem 5rem;
+        }
+        .card {
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--card-bg);
+            box-shadow: none;
+        }
+        .card-header {
+            background: transparent !important;
+            border-bottom: 1px solid var(--border) !important;
+            padding: 1.5rem !important;
+        }
+        .table {
+            background-color: transparent !important;
+        }
+        .table thead th {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--muted);
+            background-color: transparent !important;
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.25rem !important;
+            text-transform: uppercase;
+        }
+        .table tbody td {
+            font-size: 0.85rem;
+            padding: 0.875rem 1.25rem !important;
+            border-bottom: 1px solid var(--border);
+            background-color: transparent !important;
+            color: var(--text-main);
+        }
+
+        /* Nav Tabs Light Theme Fix */
+        .nav-tabs .nav-link {
+            color: var(--muted) !important;
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: transparent !important;
+            padding: 0.75rem 1.25rem !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            transition: all 0.2s;
+        }
+        .nav-tabs .nav-link:hover {
+            color: var(--text-main) !important;
+            border-bottom-color: var(--border);
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--accent) !important;
+            border-bottom-color: var(--accent) !important;
+        }
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: auto;
+        }
+        .admin-btn-fixed {
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card-bg);
+            color: var(--text-main) !important;
+            border: 1px solid var(--border);
+            z-index: 1050;
+            text-decoration: none;
+        }
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Global Terminal Drawer */
+        #global-terminal-drawer {
+            height: 40px;
+            transition: height 0.2s ease-in-out;
+            z-index: 1040;
+            background: #09090b !important;
+            display: flex;
+            flex-direction: column;
+        }
+        #global-terminal-body {
+            flex: 1;
+            background: #000000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+        .terminal-tabs {
+            background: #18181b;
+            padding: 0 10px;
+            display: flex;
+            gap: 5px;
+            border-bottom: 1px solid #27272a;
+            flex-shrink: 0;
+        }
+        .terminal-tab {
+            padding: 8px 15px;
+            font-size: 12px;
+            color: #a1a1aa;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            border: 1px solid transparent;
+            border-bottom: none;
+        }
+        .terminal-tab.active {
+            background: #000000;
+            color: #ffffff;
+            border-color: #27272a;
+        }
+        #terminal-instances-container {
+            flex-grow: 1;
+            position: relative;
+            background: #000000;
+            min-height: 0;
+        }
+        .terminal-instance {
+            width: 100%;
+            height: 100%;
+            display: none;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }        .terminal-instance.active {
+            display: block;
+        }
+
+        /* Button Hover Effects for Dark Theme */
+        [data-bs-theme="dark"] .btn-dark.border-secondary:hover {
+            background-color: #27272a !important;
+            border-color: #52525b !important;
+            color: #ffffff !important;
+        }
+        [data-bs-theme="dark"] .btn-dark.border-danger:hover {
+            background-color: rgba(220, 38, 38, 0.1) !important;
+            border-color: #dc2626 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% if user.is_authenticated and not is_login_page %}
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse d-flex flex-column">
+                <div class="sidebar-brand d-flex align-items-center justify-content-between">
+                    <div>Solstice<span style="color: #71717a;">Ops</span></div>
+                    <button class="btn btn-link p-0 text-white" id="theme-toggle">
+                        <i class="bi bi-moon-stars" id="theme-icon"></i>
+                    </button>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+                            <i class="bi bi-house-door"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-section-title">Services</li>
+                    {% for tool in tools_nav %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.kwargs.tool_name == tool.name %}active{% endif %}" href="{% url 'tool_detail' tool.name %}">
+                            <i class="si si-{% if tool.name == 'k8s' %}kubernetes{% else %}{{ tool.name }}{% endif %}" style="color: #ffffff !important;"></i>
+                            {{ tool.get_name_display }}
+                            <span class="status-dot {% if tool.status == 'installed' %}bg-success{% elif tool.status == 'installing' %}bg-warning status-pulsate{% elif tool.status == 'error' %}bg-danger{% else %}bg-secondary opacity-50{% endif %}"></span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-auto p-4 border-top border-secondary border-opacity-10">
+                    <div class="small fw-semibold text-white mb-3">{{ user.username }}</div>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link p-0 text-secondary text-decoration-none small">Logout</button>
+                    </form>
+                </div>
+            </nav>
+            {% endif %}
+
+            <main class="{% if user.is_authenticated and not is_login_page %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} main-content" style="padding-bottom: 60px;">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+        {% if user.is_authenticated and not is_login_page %}
+        <div id="global-terminal-drawer" class="fixed-bottom border-top border-secondary shadow-lg">
+            <div class="d-flex align-items-center px-3 py-2 bg-black bg-opacity-75 border-bottom border-secondary border-opacity-25" style="cursor: pointer;" onclick="toggleGlobalTerminal()">
+                <i class="bi bi-terminal me-2 text-primary"></i>
+                <span class="small fw-bold text-white">Terminal</span>
+                <div class="ms-auto">
+                    <i id="terminal-chevron" class="bi bi-chevron-up text-muted"></i>
+                </div>
+            </div>
+            <div id="global-terminal-body" class="d-none">
+                <div class="terminal-tabs" id="terminal-tabs-list"></div>
+                <div id="terminal-instances-container"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user.is_staff %}
+        <a href="/admin/" class="admin-btn-fixed" style="bottom: 60px;">
+            <i class="bi bi-shield-lock"></i>
+        </a>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
+
+    <!-- Shared Modals -->
+    <div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content bg-dark border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white">Logs</h5>
+                    <div class="ms-auto me-3 d-flex align-items-center">
+                        <div class="form-check form-switch mb-0 me-3">
+                            <input class="form-check-input" type="checkbox" id="logAutoRefresh" checked>
+                            <label class="form-check-label small" for="logAutoRefresh">Auto-refresh (5s)</label>
+                        </div>
+                        <a href="#" id="logDownloadBtn" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-download me-1"></i> Download
+                        </a>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <pre id="logContent" 
+                         class="text-light p-3 small mb-0" 
+                         style="height: 600px; overflow-y: auto; white-space: pre-wrap;"
+                         hx-get=""
+                         hx-trigger="every 5s, refreshLogs"
+                         hx-swap="innerHTML scroll:bottom">
+                        <div class="p-5 text-center"><div class="spinner-border text-light"></div></div>
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.terminals = window.terminals || {};
+        var terminals = window.terminals;
+        var terminalExpanded = localStorage.getItem('terminalExpanded') === 'true';
+
+        function saveTerminalState() {
+            var state = Object.keys(terminals).map(function(tid) {
+                var t = terminals[tid];
+                return { id: t.originalId, name: t.name, wsPath: t.wsPath, active: t.active };
+            });
+            localStorage.setItem('terminalSessions', JSON.stringify(state));
+            localStorage.setItem('terminalExpanded', terminalExpanded);
+        }
+
+        function toggleGlobalTerminal(expand) {
+            var drawer = document.getElementById('global-terminal-drawer');
+            var body = document.getElementById('global-terminal-body');
+            var chevron = document.getElementById('terminal-chevron');
+            
+            if (expand !== undefined) terminalExpanded = expand;
+            else terminalExpanded = !terminalExpanded;
+
+            if (terminalExpanded) {
+                drawer.style.height = '600px';
+                body.classList.remove('d-none');
+                chevron.classList.replace('bi-chevron-up', 'bi-chevron-down');
+                
+                // Check if we already have a system tab or any other tab
+                var hasSystem = Object.keys(window.terminals).some(tid => window.terminals[tid].originalId === 'system_shell');
+                
+                if (Object.keys(window.terminals).length === 0 && !hasSystem) {
+                    addTerminalTab('system_shell', 'System', 'ws/system/shell/');
+                } else {
+                    // Trigger fit once after transition
+                    setTimeout(function() {
+                        var activeId = Object.keys(window.terminals).find(function(id) { return window.terminals[id].active; });
+                        if (activeId) {
+                            // Disable temporary onData to avoid capturing potential echo during resize/fit
+                            window.terminals[activeId].fit.fit();
+                            window.terminals[activeId].term.focus();
+                        }
+                    }, 250);
+                }
+            } else {
+                drawer.style.height = '40px';
+                body.classList.add('d-none');
+                chevron.classList.replace('bi-chevron-down', 'bi-chevron-up');
+            }
+            saveTerminalState();
+        }
+
+        window.addTerminalTab = function(id, name, wsPath, noExpand) {
+            // Use window.terminals to ensure persistence across potential script re-executions
+            var terminals = window.terminals;
+            
+            // Special handling for system terminal to avoid duplication
+            if (id === 'system' || id === 'system_shell') {
+                var existingSystemId = Object.keys(terminals).find(tid => terminals[tid].originalId === 'system_shell');
+                if (existingSystemId) {
+                    if (!noExpand) {
+                        switchTab(existingSystemId);
+                        if (!terminalExpanded) toggleGlobalTerminal(true);
+                    }
+                    return;
+                }
+                id = 'system_shell';
+            }
+
+            var safeId = 'term-' + btoa(id).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+            if (terminals[safeId]) {
+                if (!noExpand) {
+                    switchTab(safeId);
+                    if (!terminalExpanded) toggleGlobalTerminal(true);
+                }
+                return;
+            }
+
+
+            var tabsList = document.getElementById('terminal-tabs-list');
+            var instancesContainer = document.getElementById('terminal-instances-container');
+            var tab = document.createElement('div');
+            tab.id = 'tab-' + safeId;
+            tab.className = 'terminal-tab';
+            tab.innerHTML = '<span>' + name + '</span>' + 
+                            '<i class="bi bi-arrow-clockwise ms-2 restart-tab-btn" title="Restart Session"></i>' + 
+                            (id !== 'system_shell' ? '<i class="bi bi-x ms-2 close-tab-btn"></i>' : '');
+            tab.onclick = function(e) {
+                e.stopPropagation();
+                if (e.target.classList.contains('close-tab-btn')) closeTerminalTab(safeId);
+                else if (e.target.classList.contains('restart-tab-btn')) {
+                    console.log("Restart clicked for:", safeId);
+                    restartTerminalTab(safeId);
+                }
+                else switchTab(safeId);
+            };
+            tabsList.appendChild(tab);
+            var inst = document.createElement('div');
+            inst.id = 'inst-' + safeId;
+            inst.className = 'terminal-instance';
+            instancesContainer.appendChild(inst);
+            var term = new Terminal({
+                cursorBlink: true,
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 13,
+                theme: { background: '#000000' },
+                allowProposedApi: true
+            });
+            var fit = new FitAddon.FitAddon();
+            term.loadAddon(fit);
+            term.open(inst);
+            var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            
+            function connectSocket() {
+                var socket = new WebSocket(protocol + '//' + window.location.host + '/' + wsPath);
+                socket.onmessage = function(event) {
+                    // Clear any pending restart timeout when we receive data
+                    if (terminals[safeId] && terminals[safeId].restartTimeout) {
+                        clearTimeout(terminals[safeId].restartTimeout);
+                        terminals[safeId].restartTimeout = null;
+                    }
+                    var reader = new FileReader();
+                    reader.onload = function() { term.write(new Uint8Array(reader.result)); };
+                    reader.readAsArrayBuffer(event.data);
+                };
+                return socket;
+            }
+
+            var socket = connectSocket();
+            
+            term.onData(function(data) {
+                if (terminals[safeId] && terminals[safeId].socket && terminals[safeId].socket.readyState === WebSocket.OPEN) {
+                    terminals[safeId].socket.send(JSON.stringify({ input: data }));
+                }
+            });
+
+            let resizeTimeout;
+            term.onResize(function(size) {
+                if (resizeTimeout) clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    if (window.terminals[safeId] && window.terminals[safeId].socket && window.terminals[safeId].socket.readyState === WebSocket.OPEN) {
+                        window.terminals[safeId].socket.send(JSON.stringify({ resize: { rows: size.rows, cols: size.cols } }));
+                    }
+                }, 100);
+            });
+
+            // Prevent page scroll when scrolling inside terminal
+            inst.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, { passive: false });
+            terminals[safeId] = { term: term, fit: fit, socket: socket, active: false, originalId: id, name: name, wsPath: wsPath };
+            saveTerminalState();
+
+            // Automatically fit terminal when container size changes
+            const resizeObserver = new ResizeObserver(() => {
+                if (terminals[safeId].active) {
+                    fit.fit();
+                }
+            });
+            resizeObserver.observe(inst);
+
+            switchTab(safeId);
+            if (!terminalExpanded && !noExpand) toggleGlobalTerminal(true);
+        };
+
+        function switchTab(safeId) {
+            Object.keys(terminals).forEach(function(tid) {
+                terminals[tid].active = (tid === safeId);
+                var tabEl = document.getElementById('tab-' + tid);
+                var instEl = document.getElementById('inst-' + tid);
+                if (tabEl) tabEl.classList.toggle('active', tid === safeId);
+                if (instEl) instEl.style.display = (tid === safeId ? 'block' : 'none');
+            });
+            setTimeout(function() {
+                if (terminals[safeId]) {
+                    terminals[safeId].fit.fit();
+                    terminals[safeId].term.focus();
+                }
+            }, 100);
+            saveTerminalState();
+        }
+
+        function closeTerminalTab(safeId) {
+            if (!terminals[safeId] || terminals[safeId].originalId === 'system_shell') return;
+            var wasActive = terminals[safeId].active;
+            if (terminals[safeId].socket) terminals[safeId].socket.close();
+            terminals[safeId].term.dispose();
+            var tabEl = document.getElementById('tab-' + safeId);
+            var instEl = document.getElementById('inst-' + safeId);
+            if (tabEl) tabEl.remove();
+            if (instEl) instEl.remove();
+            delete terminals[safeId];
+            if (wasActive && Object.keys(terminals).length > 0) {
+                switchTab(Object.keys(terminals)[0]);
+            }
+            saveTerminalState();
+        }
+
+        function restartTerminalTab(safeId) {
+            console.log("Attempting to restart terminal:", safeId);
+            var t = window.terminals[safeId];
+            
+            if (!t) {
+                console.log("Terminal object missing, attempting to recover from localStorage");
+                var saved = localStorage.getItem('terminalSessions');
+                if (saved) {
+                    try {
+                        var sessions = JSON.parse(saved);
+                        var s = sessions.find(sess => {
+                            var sid = 'term-' + btoa(sess.id).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+                            return sid === safeId;
+                        });
+                        if (s) {
+                            console.log("Recovered session info, re-adding tab");
+                            // Clear DOM elements associated with this safeId before re-adding
+                            var oldTab = document.getElementById('tab-' + safeId);
+                            var oldInst = document.getElementById('inst-' + safeId);
+                            if (oldTab) oldTab.remove();
+                            if (oldInst) oldInst.remove();
+                            
+                            addTerminalTab(s.id, s.name, s.wsPath);
+                            return;
+                        }
+                    } catch(e) { console.error("Recovery failed", e); }
+                }
+                return;
+            }
+
+            if (t.socket && t.socket.readyState === WebSocket.OPEN) {
+                t.term.write('\r\n\x1b[33mRestarting session...\x1b[0m\r\n');
+                t.socket.send(JSON.stringify({ restart: true }));
+                
+                // Clear existing timeout if any
+                if (t.restartTimeout) clearTimeout(t.restartTimeout);
+                
+                // Set a timeout to force reconnect if server doesn't respond with new data
+                t.restartTimeout = setTimeout(() => {
+                    if (window.terminals[safeId] && window.terminals[safeId].restartTimeout === t.restartTimeout) {
+                         t.term.write('\r\n\x1b[31mRestart timeout, force reconnecting...\x1b[0m\r\n');
+                         t.restartTimeout = null;
+                         // Close the socket and explicitly trigger re-connection logic
+                         t.socket.close();
+                         
+                         // Short delay to ensure onclose has fired or socket is fully cleaned up
+                         setTimeout(() => {
+                             if (!window.terminals[safeId].socket || window.terminals[safeId].socket.readyState !== WebSocket.OPEN) {
+                                 restartTerminalTab(safeId);
+                             }
+                         }, 500);
+                    }
+                }, 6000);
+            } else {
+                t.term.write('\r\n\x1b[33mReconnecting...\x1b[0m\r\n');
+                var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                var socket = new WebSocket(protocol + '//' + window.location.host + '/' + t.wsPath);
+                
+                socket.onmessage = function(event) {
+                    var reader = new FileReader();
+                    reader.onload = function() { t.term.write(new Uint8Array(reader.result)); };
+                    reader.readAsArrayBuffer(event.data);
+                };
+                
+                socket.onopen = function() {
+                    t.term.write('\x1b[32mConnected!\x1b[0m\r\n');
+                };
+
+                socket.onclose = function() {
+                    t.term.write('\r\n\x1b[31mConnection closed.\x1b[0m\r\n');
+                };
+
+                socket.onerror = function() {
+                    t.term.write('\r\n\x1b[31mConnection error.\x1b[0m\r\n');
+                };
+                
+                t.socket = socket;
+            }
+        }
+
+        function restoreTerminalState() {
+            var saved = localStorage.getItem('terminalSessions');
+            if (saved) {
+                try {
+                    var sessions = JSON.parse(saved);
+                    sessions.forEach(function(s) {
+                        addTerminalTab(s.id, s.name, s.wsPath, true);
+                    });
+                    var active = sessions.find(s => s.active);
+                    if (active) {
+                        var safeId = 'term-' + btoa(active.id).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+                        switchTab(safeId);
+                    }
+                } catch(e) {}
+            }
+            if (terminalExpanded) toggleGlobalTerminal(true);
+        }
+
+        window.addEventListener('load', restoreTerminalState);
+
+        // Heartbeat to keep WebSocket alive
+        setInterval(function() {
+            Object.keys(terminals).forEach(function(tid) {
+                var t = terminals[tid];
+                if (t.socket && t.socket.readyState === WebSocket.OPEN) {
+                    t.socket.send(JSON.stringify({ heartbeat: true }));
+                }
+            });
+        }, 10000);
+
+        window.addEventListener('resize', function() {
+            if (terminalExpanded) {
+                Object.keys(terminals).forEach(function(tid) {
+                    if (terminals[tid].active) terminals[tid].fit.fit();
+                });
+            }
+        });
+
+        var themeToggle = document.getElementById('theme-toggle');
+        var themeIcon = document.getElementById('theme-icon');
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeIcon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+        }
+        themeToggle.addEventListener('click', function() {
+            var currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+        var savedTheme = localStorage.getItem('theme') || 'light';
+        setTheme(savedTheme);
+
+        document.body.addEventListener('htmx:configRequest', function(event) {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+
+        window.openLogs = function(url) {
+            var content = document.getElementById('logContent');
+            if (content) {
+                content.innerHTML = '<div class="p-5 text-center"><div class="spinner-border text-light"></div></div>';
+                content.setAttribute('hx-get', url);
+                htmx.process(content);
+                htmx.ajax('GET', url, {target: '#logContent', swap: 'innerHTML'});
+                
+                var dlBtn = document.getElementById('logDownloadBtn');
+                if (dlBtn) {
+                    dlBtn.style.display = 'inline-block';
+                    dlBtn.href = url.endsWith('/') ? url + 'download/' : url + '/download/';
+                }
+                
+                var modalEl = document.getElementById('logModal');
+                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
+        };
+
+        document.body.addEventListener('htmx:beforeRequest', function(evt) {
+            if (evt.detail.target.id === 'logContent') {
+                var autoRefresh = document.getElementById('logAutoRefresh');
+                if (autoRefresh && !autoRefresh.checked && evt.detail.trigger !== 'refreshLogs') {
+                    evt.preventDefault();
+                }
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

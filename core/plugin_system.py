@@ -1,0 +1,77 @@
+import logging
+import importlib
+import os
+from django.conf import settings
+
+logger = logging.getLogger(__name__)
+
+class BaseModule:
+    """Base class for all SolsticeOps modules."""
+    module_id = None
+    module_name = None
+    description = ""
+    version = "1.0.0"
+
+    def __init__(self):
+        if not self.module_id:
+            raise ValueError("Module must have a module_id")
+
+    def get_urls(self):
+        """Return a list of URL patterns for this module."""
+        return []
+
+    def get_context_data(self, request, tool):
+        """Return additional context data for the tool detail view."""
+        return {}
+
+    def handle_hx_request(self, request, tool, target):
+        """Handle HTMX requests for this module."""
+        return None
+
+    def install(self, request, tool):
+        """Handle tool installation."""
+        pass
+
+    def get_terminal_session_types(self):
+        """Return a dictionary of terminal session types {name: class}."""
+        return {}
+
+class ModuleRegistry:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ModuleRegistry, cls).__new__(cls)
+            cls._instance.modules = {}
+        return cls._instance
+
+    def register(self, module_class):
+        module = module_class()
+        self.modules[module.module_id] = module
+        logger.info(f"Registered module: {module.module_id}")
+
+    def get_module(self, module_id):
+        return self.modules.get(module_id)
+
+    def get_all_modules(self):
+        return self.modules.values()
+
+    def discover_modules(self):
+        """Discover modules in the 'modules' directory."""
+        modules_dir = os.path.join(settings.BASE_DIR, 'modules')
+        if not os.path.exists(modules_dir):
+            os.makedirs(modules_dir)
+            return
+
+        for item in os.listdir(modules_dir):
+            item_path = os.path.join(modules_dir, item)
+            if os.path.isdir(item_path) and os.path.exists(os.path.join(item_path, '__init__.py')):
+                try:
+                    # Try to import 'module' from the package
+                    module_pkg = importlib.import_module(f'modules.{item}.module')
+                    if hasattr(module_pkg, 'Module'):
+                        self.register(module_pkg.Module)
+                except Exception as e:
+                    logger.error(f"Failed to load module {item}: {e}")
+
+plugin_registry = ModuleRegistry()

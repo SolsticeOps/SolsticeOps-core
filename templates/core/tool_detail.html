@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ tool.get_name_display }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb" class="mb-2">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Infrastructure</a></li>
+            <li class="breadcrumb-item active">{{ tool.get_name_display }}</li>
+        </ol>
+    </nav>
+
+    <script>
+        function filterByNamespace(ns) {
+            var url = new URL(window.location.href);
+            if (ns) url.searchParams.set('namespace', ns);
+            else url.searchParams.delete('namespace');
+            window.location.href = url.toString();
+        }
+
+        function openDescribe(type, ns, name) {
+            document.getElementById('describeTitle').innerText = 'Describe ' + type + ': ' + name;
+            document.getElementById('describeContent').innerHTML = '<div class="p-5 text-center"><div class="spinner-border text-light"></div></div>';
+            var modal = new bootstrap.Modal(document.getElementById('describeModal'));
+            modal.show();
+            
+            var url = '/k8s/resource/describe/' + type + '/';
+            if (ns) {
+                url += ns + '/' + name + '/';
+            } else {
+                url += name + '/';
+            }
+            
+            fetch(url)
+                .then(function(r) { return r.text(); })
+                .then(function(data) {
+                    document.getElementById('describeContent').innerText = data;
+                });
+        }
+    </script>
+    <div class="d-flex align-items-center">
+        <div class="border rounded-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="background-color: var(--icon-box); width: 64px !important; height: 64px !important; flex-shrink: 0;">
+            <i class="si si-{% if tool.name == 'k8s' %}kubernetes{% else %}{{ tool.name }}{% endif %} fs-3" style="color: var(--text-main);"></i>
+        </div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">{{ tool.get_name_display }}</h1>
+            <span class="text-muted small">Service Management & Resource Control</span>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="row mb-4 g-3">
+            <div class="col-md-auto d-flex" style="min-width: 400px; flex: 1;">
+                <div class="card shadow-sm border-0 w-100">
+                    <div class="card-body p-4 d-flex flex-column">
+                        {% include 'core/partials/tool_status.html' %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-auto">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4 d-flex flex-column" style="min-width: 300px; height: auto;">
+                        {% if tool.status == 'installed' %}
+                        <h6 class="fw-bold mb-3">Service Management</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"><i class="bi bi-play-fill"></i> Start</button>
+                                <button class="btn btn-outline-warning btn-sm d-flex align-items-center gap-2"><i class="bi bi-pause-fill"></i> Stop</button>
+                                <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"><i class="bi bi-arrow-clockwise"></i> Restart</button>
+                                {% if tool.name == 'docker' or tool.name == 'k8s' %}
+                                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+                                        onclick="openLogs('{% url 'service_logs' tool.name %}')">
+                                    <i class="bi bi-file-text"></i> Service Logs
+                                </button>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if tool.name == 'jenkins' %}
+                                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+                                        onclick="openLogs('/docker/container/{{ tool.config_data.container_name|default:'jenkins' }}/logs/')">
+                                    <i class="bi bi-file-text"></i> Logs
+                                </button>
+                                <script>
+                                    function openJenkinsWeb() {
+                                        const host = window.location.hostname;
+                                        const port = "{{ tool.config_data.port|default:'' }}" || "8080";
+                                        const url = `http://${host}:${port}`;
+                                        window.open(url, '_blank');
+                                    }
+                                </script>
+                                <button onclick="openJenkinsWeb()" class="btn btn-outline-info btn-sm d-flex align-items-center gap-2">
+                                    <i class="bi bi-box-arrow-up-right"></i> Open Jenkins
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#changeJenkinsPasswordModal">
+                                    <i class="bi bi-key"></i> Change Admin Password
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <h6 class="fw-bold mb-3 text-muted">Service Management</h6>
+                        <div class="mt-auto">
+                            <span class="text-muted small">Service management available after installation</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if tool.status == 'installed' %}
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                {% if tool.name == 'k8s' %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="small">
+                        <span class="text-muted">Context:</span> <span class="badge bg-light text-dark border">{{ k8s_context }}</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" style="width: 200px;" onchange="filterByNamespace(this.value)">
+                            <option value="">All Namespaces</option>
+                            {% for ns in k8s_namespaces %}
+                            <option value="{{ ns.metadata.name }}" {% if current_namespace == ns.metadata.name %}selected{% endif %}>{{ ns.metadata.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+                <ul class="nav nav-tabs card-header-tabs" id="resourceTabs" role="tablist">
+                    {% if tool.name == 'docker' %}
+                    <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#containers" type="button">Containers</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#images" type="button">Images</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#volumes" type="button">Volumes</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#networks" type="button">Networks</button></li>
+                    {% elif tool.name == 'k8s' %}
+                    <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#pods" type="button">Pods</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#deployments" type="button">Deployments</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#services" type="button">Services</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#nodes" type="button">Nodes</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#configmaps" type="button">ConfigMaps</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#secrets" type="button">Secrets</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#events" type="button">Events</button></li>
+                    {% elif tool.name == 'jenkins' %}
+                    <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#jenkins_jobs" type="button" hx-get="{% url 'tool_detail' tool.name %}?tab=jenkins_jobs" hx-target="#jenkins_jobs" hx-trigger="click">Jobs</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#jenkins_nodes" type="button" hx-get="{% url 'tool_detail' tool.name %}?tab=jenkins_nodes" hx-target="#jenkins_nodes" hx-trigger="click">Nodes</button></li>
+                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#jenkins_plugins" type="button" hx-get="{% url 'tool_detail' tool.name %}?tab=jenkins_plugins" hx-target="#jenkins_plugins" hx-trigger="click">Plugins</button></li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="card-body p-4">
+                <div class="tab-content">
+                    {% if tool.name == 'docker' %}
+                    <div class="tab-pane fade show active" id="containers">{% include 'core/partials/docker_containers.html' %}</div>
+                    <div class="tab-pane fade" id="images">{% include 'core/partials/docker_images.html' %}</div>
+                    <div class="tab-pane fade" id="volumes">{% include 'core/partials/docker_volumes.html' %}</div>
+                    <div class="tab-pane fade" id="networks">{% include 'core/partials/docker_networks.html' %}</div>
+                    {% elif tool.name == 'k8s' %}
+                    <div class="tab-pane fade show active" id="pods" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_pods{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_pods.html' %}</div>
+                    <div class="tab-pane fade" id="deployments" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_deployments{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_deployments.html' %}</div>
+                    <div class="tab-pane fade" id="services" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_services{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_services.html' %}</div>
+                    <div class="tab-pane fade" id="nodes" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_nodes" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_nodes.html' %}</div>
+                    <div class="tab-pane fade" id="configmaps" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_configmaps{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_configmaps.html' %}</div>
+                    <div class="tab-pane fade" id="secrets" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_secrets{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_secrets.html' %}</div>
+                    <div class="tab-pane fade" id="events" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_events{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_events.html' %}</div>
+                    {% elif tool.name == 'jenkins' %}
+                    <div class="tab-pane fade show active" id="jenkins_jobs" hx-get="{% url 'tool_detail' tool.name %}?tab=jenkins_jobs" hx-trigger="load, every 10s" hx-swap="innerHTML">
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="mt-2">Connecting to Jenkins...</p>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="jenkins_nodes" hx-swap="innerHTML">
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="mt-2">Loading nodes...</p>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="jenkins_plugins" hx-swap="innerHTML">
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="mt-2">Loading plugins...</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Shared Modals -->
+
+<div class="modal fade" id="describeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white" id="describeTitle">Description</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <pre id="describeContent" class="text-light p-3 small mb-0" style="height: 600px; overflow-y: auto; white-space: pre-wrap;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="yamlModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white" id="yamlModalTitle">Edit YAML</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="yamlEditor" style="height: 600px; width: 100%;"></div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveYaml()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openTerminal(type, id, name) {
+        var wsPath = '';
+        if (type === 'docker') {
+            wsPath = 'ws/docker/shell/' + id + '/';
+        } else {
+            wsPath = 'ws/k8s/shell/' + id + '/';
+        }
+        if (typeof addTerminalTab === 'function') {
+            addTerminalTab(id, name, wsPath);
+        } else {
+            console.error('addTerminalTab not found');
+        }
+    }
+
+
+
+    function openPodLogs(ns, name) {
+        openLogs('/k8s/pod/' + ns + '/' + name + '/logs/');
+    }
+
+    function openPodShell(ns, name) {
+        openTerminal('k8s', ns + '/' + name, name);
+    }
+
+    function openDockerShell(id, name) {
+        openTerminal('docker', id, name);
+    }
+
+    var currentYamlContext = {};
+    var aceEditor;
+    function openYamlEditor(type, namespace, name) {
+        currentYamlContext = { type: type, namespace: namespace, name: name };
+        fetch('/k8s/resource/yaml/' + type + '/' + namespace + '/' + name + '/')
+            .then(function(r) { return r.text(); })
+            .then(function(yaml) {
+                if (!aceEditor) {
+                    aceEditor = ace.edit("yamlEditor");
+                    aceEditor.setTheme("ace/theme/monokai");
+                    aceEditor.session.setMode("ace/mode/yaml");
+                }
+                aceEditor.setValue(yaml, -1);
+                new bootstrap.Modal(document.getElementById('yamlModal')).show();
+            });
+    }
+
+    function saveYaml() {
+        var ctx = currentYamlContext;
+        var formData = new FormData();
+        formData.append('yaml', aceEditor.getValue());
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        fetch('/k8s/resource/yaml/' + ctx.type + '/' + ctx.namespace + '/' + ctx.name + '/', { method: 'POST', body: formData })
+            .then(function(r) { if (r.ok) location.reload(); else r.text().then(alert); });
+    }
+
+    // Handle auto-refresh toggle logic if needed via HTMX events
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+        if (evt.detail.target.id === 'logContent') {
+            var autoRefresh = document.getElementById('logAutoRefresh');
+            if (autoRefresh && !autoRefresh.checked && evt.detail.trigger !== 'refreshLogs') {
+                evt.preventDefault();
+            }
+        }
+    });
+</script>
+
+<div class="modal fade" id="changeJenkinsPasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white">Change Jenkins Admin Password</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'change_jenkins_admin_password' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-light">New Password</label>
+                        <input type="password" name="new_password" class="form-control bg-dark text-light border-secondary" required>
+                        <div class="form-text text-muted">This will update the password for the '{{ tool.config_data.username|default:'admin' }}' user and save it in SolsticeOps.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
