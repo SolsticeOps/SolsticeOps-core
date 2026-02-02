@@ -117,13 +117,16 @@ def tool_detail(request, tool_name):
         'tools_nav': tools_nav,
         'is_login_page': False,
         'is_admin': False,
-        'module': module
     }
 
     if module:
         # Get module specific context
         module_context = module.get_context_data(request, tool)
         context.update(module_context)
+        
+        # Add dynamic module properties to context
+        context['resource_tabs'] = module.get_resource_tabs()
+        context['module'] = module
 
         # Handle HTMX requests
         if request.headers.get('HX-Request'):
