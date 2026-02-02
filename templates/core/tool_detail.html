@@ -41,7 +41,7 @@
     </script>
     <div class="d-flex align-items-center">
         <div class="border rounded-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="background-color: var(--icon-box); width: 64px !important; height: 64px !important; flex-shrink: 0;">
-            <i class="si si-{% if tool.name == 'k8s' %}kubernetes{% else %}{{ tool.name }}{% endif %} fs-3" style="color: var(--text-main);"></i>
+            <i class="si si-{{ tool.get_icon_class }} fs-3" style="color: var(--text-main);"></i>
         </div>
         <div>
             <h1 class="h3 fw-bold mb-0">{{ tool.get_name_display }}</h1>
@@ -98,7 +98,7 @@
             </div>
         </div>
 
-        {% if tool.status == 'installed' %}
+        {% if resource_tabs %}
         <div class="card shadow-sm border-0">
             <div class="card-header bg-transparent border-0 pt-4 px-4">
                 {% call_method module "get_resource_header_template_name" as resource_header_template %}
@@ -106,8 +106,6 @@
                     {% include resource_header_template %}
                 {% endif %}
                 
-                {% call_method module "get_resource_tabs" as resource_tabs %}
-                {% if resource_tabs %}
                 <ul class="nav nav-tabs card-header-tabs" id="resourceTabs" role="tablist">
                     {% for tab in resource_tabs %}
                     <li class="nav-item">
@@ -125,31 +123,25 @@
                     </li>
                     {% endfor %}
                 </ul>
-                {% endif %}
             </div>
             <div class="card-body p-4">
                 <div class="tab-content">
-                    {% if resource_tabs %}
-                        {% for tab in resource_tabs %}
-                        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
-                             id="{{ tab.id }}"
-                             {% if tab.hx_auto_refresh %}
-                             hx-get="{{ tab.hx_get }}" 
-                             hx-trigger="{{ tab.hx_auto_refresh }}" 
-                             hx-swap="innerHTML"
-                             {% endif %}>
-                            {% if tab.template %}
-                                {% include tab.template %}
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    {% endif %}
+                    {% for tab in resource_tabs %}
+                    <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                         id="{{ tab.id }}"
+                         {% if tab.hx_auto_refresh %}
+                         hx-get="{{ tab.hx_get }}" 
+                         hx-trigger="{{ tab.hx_auto_refresh }}" 
+                         hx-swap="innerHTML"
+                         {% endif %}>
+                        {% if tab.template %}
+                            {% include tab.template %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
-        {% endif %}
-    </div>
-</div>
         {% endif %}
     </div>
 </div>
