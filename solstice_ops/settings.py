@@ -40,6 +40,14 @@ INSTALLED_APPS = [
     'core',
 ]
 
+# Discover and add modules to INSTALLED_APPS
+MODULES_DIR = BASE_DIR / 'modules'
+if MODULES_DIR.exists():
+    import os
+    for item in os.listdir(MODULES_DIR):
+        if (MODULES_DIR / item).is_dir() and (MODULES_DIR / item / '__init__.py').exists():
+            INSTALLED_APPS.append(f'modules.{item}')
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
