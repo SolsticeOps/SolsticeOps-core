@@ -27,7 +27,15 @@ class Tool(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} - {self.status}"
+        return self.get_name_display()
+
+    @property
+    def get_icon_class(self):
+        from .plugin_system import plugin_registry
+        module = plugin_registry.get_module(self.name)
+        if module:
+            return module.get_icon_class()
+        return self.name
 
 class DockerRegistry(models.Model):
     """Model representing a Docker registry."""

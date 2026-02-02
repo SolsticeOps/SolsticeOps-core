@@ -20,6 +20,34 @@ class BaseModule:
         """Return a list of URL patterns for this module."""
         return []
 
+    def get_icon_class(self):
+        """Return the Simple Icons class name for this module."""
+        return self.module_id
+
+    def get_template_name(self):
+        """Return the template name for the tool detail view."""
+        return f"core/modules/{self.module_id}.html"
+
+    def get_install_template_name(self):
+        """Return the template name for the installation view."""
+        return None
+
+    def get_logs_url(self, tool):
+        """Return the URL for fetching service logs."""
+        return None
+
+    def get_extra_actions_template_name(self):
+        """Return the template name for extra actions in tool detail."""
+        return None
+
+    def get_resource_header_template_name(self):
+        """Return the template name for the resource section header."""
+        return None
+
+    def get_resource_tabs(self):
+        """Return a list of resource tabs: [{'id': '...', 'label': '...', 'template': '...', 'hx_get': '...', 'hx_auto_refresh': '...'}]"""
+        return []
+
     def get_context_data(self, request, tool):
         """Return additional context data for the tool detail view."""
         return {}

@@ -108,14 +108,16 @@ def server_stats_partial(request):
 @login_required
 def tool_detail(request, tool_name):
     tool = get_object_or_404(Tool, name=tool_name)
-    tools = Tool.objects.all()
+    all_tools = Tool.objects.all()
+    tools_nav = [t for t in all_tools if plugin_registry.get_module(t.name)]
     
     module = plugin_registry.get_module(tool.name)
     context = {
         'tool': tool,
-        'tools_nav': tools,
+        'tools_nav': tools_nav,
         'is_login_page': False,
-        'is_admin': False
+        'is_admin': False,
+        'module': module
     }
 
     if module:

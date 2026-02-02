@@ -70,38 +70,20 @@
                                 <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"><i class="bi bi-play-fill"></i> Start</button>
                                 <button class="btn btn-outline-warning btn-sm d-flex align-items-center gap-2"><i class="bi bi-pause-fill"></i> Stop</button>
                                 <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"><i class="bi bi-arrow-clockwise"></i> Restart</button>
-{% if tool.name == 'docker' %}
-<button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
-        onclick="openLogs('/docker/container/{{ tool.config_data.container_name|default:'' }}/logs/')">
-    <i class="bi bi-file-text"></i> Service Logs
-</button>
-{% elif tool.name == 'k8s' %}
-<button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
-        onclick="openLogs('/k8s/pods/logs/')">
-    <i class="bi bi-file-text"></i> Service Logs
-</button>
-{% endif %}
+                                
+                                {% load core_tags %}
+                                {% call_method module "get_logs_url" tool as logs_url %}
+                                {% if logs_url %}
+                                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+                                        onclick="openLogs('{{ logs_url }}')">
+                                    <i class="bi bi-file-text"></i> Service Logs
+                                </button>
+                                {% endif %}
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                {% if tool.name == 'jenkins' %}
-                                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
-                                        onclick="openLogs('/docker/container/{{ tool.config_data.container_name|default:'jenkins' }}/logs/')">
-                                    <i class="bi bi-file-text"></i> Logs
-                                </button>
-                                <script>
-                                    function openJenkinsWeb() {
-                                        const host = window.location.hostname;
-                                        const port = "{{ tool.config_data.port|default:'' }}" || "8080";
-                                        const url = `http://${host}:${port}`;
-                                        window.open(url, '_blank');
-                                    }
-                                </script>
-                                <button onclick="openJenkinsWeb()" class="btn btn-outline-info btn-sm d-flex align-items-center gap-2">
-                                    <i class="bi bi-box-arrow-up-right"></i> Open Jenkins
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#changeJenkinsPasswordModal">
-                                    <i class="bi bi-key"></i> Change Admin Password
-                                </button>
+                                {% call_method module "get_extra_actions_template_name" as extra_actions_template %}
+                                {% if extra_actions_template %}
+                                    {% include extra_actions_template %}
                                 {% endif %}
                             </div>
                         </div>
@@ -119,80 +101,55 @@
         {% if tool.status == 'installed' %}
         <div class="card shadow-sm border-0">
             <div class="card-header bg-transparent border-0 pt-4 px-4">
-                {% if tool.name == 'k8s' %}
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="small">
-                        <span class="text-muted">Context:</span> <span class="badge bg-light text-dark border">{{ k8s_context }}</span>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <select class="form-select form-select-sm" style="width: 200px;" onchange="filterByNamespace(this.value)">
-                            <option value="">All Namespaces</option>
-                            {% for ns in k8s_namespaces %}
-                            <option value="{{ ns.metadata.name }}" {% if current_namespace == ns.metadata.name %}selected{% endif %}>{{ ns.metadata.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
+                {% call_method module "get_resource_header_template_name" as resource_header_template %}
+                {% if resource_header_template %}
+                    {% include resource_header_template %}
                 {% endif %}
+                
+                {% call_method module "get_resource_tabs" as resource_tabs %}
+                {% if resource_tabs %}
                 <ul class="nav nav-tabs card-header-tabs" id="resourceTabs" role="tablist">
-                    {% if tool.name == 'docker' %}
-                    <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#containers" type="button">Containers</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#images" type="button">Images</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#volumes" type="button">Volumes</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#networks" type="button">Networks</button></li>
-                    {% elif tool.name == 'k8s' %}
-                    <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#pods" type="button">Pods</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#deployments" type="button">Deployments</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#services" type="button">Services</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#nodes" type="button">Nodes</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#configmaps" type="button">ConfigMaps</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#secrets" type="button">Secrets</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#events" type="button">Events</button></li>
-                    {% elif tool.name == 'jenkins' %}
-                    <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#jenkins_jobs" type="button" hx-get="{% url 'tool_detail' tool.name %}?tab=jenkins_jobs" hx-target="#jenkins_jobs" hx-trigger="click">Jobs</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#jenkins_nodes" type="button" hx-get="{% url 'tool_detail' tool.name %}?tab=jenkins_nodes" hx-target="#jenkins_nodes" hx-trigger="click">Nodes</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#jenkins_plugins" type="button" hx-get="{% url 'tool_detail' tool.name %}?tab=jenkins_plugins" hx-target="#jenkins_plugins" hx-trigger="click">Plugins</button></li>
-                    {% endif %}
+                    {% for tab in resource_tabs %}
+                    <li class="nav-item">
+                        <button class="nav-link {% if forloop.first %}active{% endif %} fw-bold" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#{{ tab.id }}" 
+                                type="button"
+                                {% if tab.hx_get %}
+                                hx-get="{{ tab.hx_get }}" 
+                                hx-target="#{{ tab.id }}" 
+                                hx-trigger="click"
+                                {% endif %}>
+                            {{ tab.label }}
+                        </button>
+                    </li>
+                    {% endfor %}
                 </ul>
+                {% endif %}
             </div>
             <div class="card-body p-4">
                 <div class="tab-content">
-                    {% if tool.name == 'docker' %}
-                    <div class="tab-pane fade show active" id="containers">{% include 'core/partials/docker_containers.html' %}</div>
-                    <div class="tab-pane fade" id="images">{% include 'core/partials/docker_images.html' %}</div>
-                    <div class="tab-pane fade" id="volumes">{% include 'core/partials/docker_volumes.html' %}</div>
-                    <div class="tab-pane fade" id="networks">{% include 'core/partials/docker_networks.html' %}</div>
-                    {% elif tool.name == 'k8s' %}
-                    <div class="tab-pane fade show active" id="pods" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_pods{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_pods.html' %}</div>
-                    <div class="tab-pane fade" id="deployments" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_deployments{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_deployments.html' %}</div>
-                    <div class="tab-pane fade" id="services" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_services{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_services.html' %}</div>
-                    <div class="tab-pane fade" id="nodes" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_nodes" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_nodes.html' %}</div>
-                    <div class="tab-pane fade" id="configmaps" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_configmaps{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_configmaps.html' %}</div>
-                    <div class="tab-pane fade" id="secrets" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_secrets{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_secrets.html' %}</div>
-                    <div class="tab-pane fade" id="events" hx-get="{% url 'tool_detail' tool.name %}?tab=k8s_events{% if current_namespace %}&namespace={{ current_namespace }}{% endif %}" hx-trigger="every 5s" hx-swap="innerHTML">{% include 'core/partials/k8s_events.html' %}</div>
-                    {% elif tool.name == 'jenkins' %}
-                    <div class="tab-pane fade show active" id="jenkins_jobs" hx-get="{% url 'tool_detail' tool.name %}?tab=jenkins_jobs" hx-trigger="load, every 10s" hx-swap="innerHTML">
-                        <div class="text-center p-4">
-                            <div class="spinner-border text-primary"></div>
-                            <p class="mt-2">Connecting to Jenkins...</p>
+                    {% if resource_tabs %}
+                        {% for tab in resource_tabs %}
+                        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                             id="{{ tab.id }}"
+                             {% if tab.hx_auto_refresh %}
+                             hx-get="{{ tab.hx_get }}" 
+                             hx-trigger="{{ tab.hx_auto_refresh }}" 
+                             hx-swap="innerHTML"
+                             {% endif %}>
+                            {% if tab.template %}
+                                {% include tab.template %}
+                            {% endif %}
                         </div>
-                    </div>
-                    <div class="tab-pane fade" id="jenkins_nodes" hx-swap="innerHTML">
-                        <div class="text-center p-4">
-                            <div class="spinner-border text-primary"></div>
-                            <p class="mt-2">Loading nodes...</p>
-                        </div>
-                    </div>
-                    <div class="tab-pane fade" id="jenkins_plugins" hx-swap="innerHTML">
-                        <div class="text-center p-4">
-                            <div class="spinner-border text-primary"></div>
-                            <p class="mt-2">Loading plugins...</p>
-                        </div>
-                    </div>
+                        {% endfor %}
                     {% endif %}
                 </div>
             </div>
         </div>
+        {% endif %}
+    </div>
+</div>
         {% endif %}
     </div>
 </div>

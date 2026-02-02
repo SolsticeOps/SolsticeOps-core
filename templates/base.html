@@ -262,7 +262,7 @@
                     {% for tool in tools_nav %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.kwargs.tool_name == tool.name %}active{% endif %}" href="{% url 'tool_detail' tool.name %}">
-                            <i class="si si-{% if tool.name == 'k8s' %}kubernetes{% else %}{{ tool.name }}{% endif %}" style="color: #ffffff !important;"></i>
+                            <i class="si si-{{ tool.get_icon_class }}" style="color: #ffffff !important;"></i>
                             {{ tool.get_name_display }}
                             <span class="status-dot {% if tool.status == 'installed' %}bg-success{% elif tool.status == 'installing' %}bg-warning status-pulsate{% elif tool.status == 'error' %}bg-danger{% else %}bg-secondary opacity-50{% endif %}"></span>
                         </a>
