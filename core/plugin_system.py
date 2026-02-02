@@ -1,20 +1,28 @@
 import logging
 import importlib
 import os
+from abc import ABC, abstractmethod
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-class BaseModule:
-    """Base class for all SolsticeOps modules."""
-    module_id = None
-    module_name = None
+class BaseModule(ABC):
+    """Abstract base class for all SolsticeOps modules."""
+    
+    @property
+    @abstractmethod
+    def module_id(self):
+        """Unique identifier for the module."""
+        pass
+
+    @property
+    @abstractmethod
+    def module_name(self):
+        """Human-readable name of the module."""
+        pass
+
     description = ""
     version = "1.0.0"
-
-    def __init__(self):
-        if not self.module_id:
-            raise ValueError("Module must have a module_id")
 
     def get_urls(self):
         """Return a list of URL patterns for this module."""
