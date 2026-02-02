@@ -155,5 +155,5 @@ cython_debug/
 .vscode/
 
 # SolsticeOps Modules (should be submodules)
-modules/*
+# modules/*
 !modules/__init__.py
