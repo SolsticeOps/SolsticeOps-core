@@ -20,6 +20,10 @@ class BaseModule:
         """Return a list of URL patterns for this module."""
         return []
 
+    def get_websocket_urls(self):
+        """Return a list of WebSocket URL patterns for this module."""
+        return []
+
     def get_icon_class(self):
         """Return the Simple Icons class name for this module."""
         return self.module_id

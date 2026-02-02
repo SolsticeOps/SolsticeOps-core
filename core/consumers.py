@@ -1,23 +1,22 @@
 import json
 from channels.generic.websocket import WebsocketConsumer
 from .terminal_manager import manager
+from .plugin_system import plugin_registry
 
 class TerminalConsumer(WebsocketConsumer):
     def connect(self):
         self.session_type = self.scope['url_route']['kwargs'].get('session_type', 'system')
+        self.kwargs = self.scope['url_route']['kwargs'].copy()
+        # Remove session_type from kwargs as it's not needed for session initialization
+        self.kwargs.pop('session_type', None)
         
-        if self.session_type == 'docker':
-            container_id = self.scope['url_route']['kwargs']['container_id']
-            self.session_id = f"docker_{container_id}"
-            self.kwargs = {'container_id': container_id}
-        elif self.session_type == 'k8s':
-            namespace = self.scope['url_route']['kwargs']['namespace']
-            pod_name = self.scope['url_route']['kwargs']['pod_name']
-            self.session_id = f"k8s_{namespace}_{pod_name}"
-            self.kwargs = {'namespace': namespace, 'pod_name': pod_name}
-        else:
+        if self.session_type == 'system':
             self.session_id = "system_shell"
-            self.kwargs = {}
+        else:
+            # Generate a unique session ID based on session type and all kwargs
+            sorted_kwargs = sorted(self.kwargs.items())
+            kwargs_str = "_".join([f"{k}_{v}" for k, v in sorted_kwargs])
+            self.session_id = f"{self.session_type}_{kwargs_str}"
 
         self.accept()
         self.session = manager.get_session(self.session_id, self.session_type, **self.kwargs)
