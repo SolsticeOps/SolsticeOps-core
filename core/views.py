@@ -75,7 +75,9 @@ def get_server_stats():
 
 @login_required
 def dashboard(request):
-    tools = Tool.objects.all()
+    all_tools = Tool.objects.all()
+    # Filter tools to only those registered in plugin_registry
+    tools = [tool for tool in all_tools if plugin_registry.get_module(tool.name)]
     
     # Hardware Info (cached or static)
     info = cpuinfo.get_cpu_info()

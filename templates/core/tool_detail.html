@@ -70,12 +70,17 @@
                                 <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"><i class="bi bi-play-fill"></i> Start</button>
                                 <button class="btn btn-outline-warning btn-sm d-flex align-items-center gap-2"><i class="bi bi-pause-fill"></i> Stop</button>
                                 <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"><i class="bi bi-arrow-clockwise"></i> Restart</button>
-                                {% if tool.name == 'docker' or tool.name == 'k8s' %}
-                                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
-                                        onclick="openLogs('{% url 'service_logs' tool.name %}')">
-                                    <i class="bi bi-file-text"></i> Service Logs
-                                </button>
-                                {% endif %}
+{% if tool.name == 'docker' %}
+<button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+        onclick="openLogs('/docker/container/{{ tool.config_data.container_name|default:'' }}/logs/')">
+    <i class="bi bi-file-text"></i> Service Logs
+</button>
+{% elif tool.name == 'k8s' %}
+<button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+        onclick="openLogs('/k8s/pods/logs/')">
+    <i class="bi bi-file-text"></i> Service Logs
+</button>
+{% endif %}
                             </div>
                             <div class="d-flex flex-wrap gap-2">
                                 {% if tool.name == 'jenkins' %}
