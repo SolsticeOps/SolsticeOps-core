@@ -29,7 +29,6 @@ class Tool(models.Model):
     def __str__(self):
         return self.get_name_display()
 
-    @property
     def get_name_display(self):
         from .plugin_system import plugin_registry
         module = plugin_registry.get_module(self.name)
@@ -37,7 +36,6 @@ class Tool(models.Model):
             return module.module_name
         return self.name.capitalize()
 
-    @property
     def get_icon_class(self):
         from .plugin_system import plugin_registry
         module = plugin_registry.get_module(self.name)
