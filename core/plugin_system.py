@@ -40,6 +40,10 @@ class BaseModule:
         """Return the template name for extra actions in tool detail."""
         return None
 
+    def get_extra_content_template_name(self):
+        """Return the template name for extra content (like modals) in tool detail."""
+        return None
+
     def get_resource_header_template_name(self):
         """Return the template name for the resource section header."""
         return None
