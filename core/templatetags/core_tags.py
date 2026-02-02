@@ -3,15 +3,26 @@ from django import template
 register = template.Library()
 
 @register.filter
-def to_opacity(value):
-    """Converts a percentage (0-100) to an opacity value (0-1)."""
+def divide(value, arg):
     try:
-        # Ensure value is a float and scale it
-        opacity = float(value) / 100.0
-        # Clamp between 0 and 1
-        return max(0.0, min(1.0, opacity))
-    except (ValueError, TypeError):
-        return 0.0
+        return float(value) / float(arg)
+    except (ValueError, ZeroDivisionError):
+        return 0
+
+@register.filter
+def to_opacity(value):
+    """Maps 0-100 to 0.4-1.0 opacity range for high contrast."""
+    try:
+        return (float(value) / 100.0) * 0.6 + 0.4
+    except:
+        return 0.4
+
+@register.filter
+def split_env(value):
+    """Splits 'KEY=VALUE' string into (KEY, VALUE) tuple."""
+    if '=' in value:
+        return value.split('=', 1)
+    return value, ''
 
 @register.simple_tag
 def call_method(obj, method_name, *args):
