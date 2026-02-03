@@ -2,6 +2,8 @@
 
 SolsticeOps is a modular DevOps management dashboard.
 
+[Русская версия](README-ru_RU.md)
+
 ## Architecture
 This is the core component which provides:
 - User authentication
@@ -11,10 +13,16 @@ This is the core component which provides:
 - Terminal session management
 
 ## Documentation
-Detailed documentation is available in the `docs/` directory.
-- [Installation](docs/installation.md)
-- [Creating Modules](docs/module_creation.md)
-- [API Reference](docs/api_reference.md)
+Detailed documentation is available in the `docs/en_US/` directory.
+- [Installation](docs/en_US/installation.md)
+- [Creating Modules](docs/en_US/module_creation.md)
+- [API Reference](docs/en_US/api_reference.md)
+
+## Dependency Management
+SolsticeOps uses a modular dependency approach. 
+- Core dependencies are listed in the root `requirements.txt`.
+- Each module maintains its own `requirements.txt` for specific functionality.
+This ensures you only install what you actually use.
 
 ## Modules
 SolsticeOps uses Git submodules for its modules. Available modules:

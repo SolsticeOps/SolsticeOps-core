@@ -4,9 +4,11 @@
 
 Base class for all modules.
 
-### Attributes
+### Properties (Abstract)
 - `module_id`: Unique identifier for the module (matches `Tool.name`).
 - `module_name`: Human-readable name.
+
+### Attributes
 - `description`: Short description of the module.
 - `version`: Module version.
 

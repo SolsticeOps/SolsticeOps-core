@@ -21,7 +21,7 @@ SolsticeOps-core is the central management system. Modules are added as Git subm
    source .venv/bin/activate
    ```
 
-3. Install dependencies:
+3. Install core dependencies:
    ```bash
    pip install -r requirements.txt
    ```
@@ -31,11 +31,16 @@ SolsticeOps-core is the central management system. Modules are added as Git subm
    python manage.py migrate
    ```
 
-5. Add modules:
+5. Add and initialize modules:
    ```bash
-   git submodule add https://github.com/SolsticeOps/SolsticeOps-docker.git modules/docker
-   git submodule add https://github.com/SolsticeOps/SolsticeOps-k8s.git modules/k8s
-   git submodule add https://github.com/SolsticeOps/SolsticeOps-jenkins.git modules/jenkins
+   # Add a new submodule
+   git submodule add {module_repo_url} modules/{module_name}
+   
+   # Or if you just cloned the core with existing submodules:
+   git submodule update --init --recursive
+
+   # Install module-specific dependencies
+   pip install -r modules/{module_name}/requirements.txt
    ```
 
 6. Run the server:
