@@ -1,13 +1,18 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Login{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center mt-5">
     <div class="col-md-4">
+        <div class="text-center mb-4">
+            <img src="{% static 'login_logo_light.svg' %}" alt="Logo" class="d-none-light d-block-dark mx-auto" style="height: 80px;">
+            <img src="{% static 'login_logo_dark.svg' %}" alt="Logo" class="d-block-light d-none-dark mx-auto" style="height: 80px;">
+        </div>
         <div class="card shadow">
             <div class="card-body p-4">
-                <h3 class="card-title text-center mb-4">SolsticeOps Login</h3>
+                <h3 class="card-title text-center mb-4">Login</h3>
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
