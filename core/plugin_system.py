@@ -95,6 +95,7 @@ class ModuleRegistry:
         if cls._instance is None:
             cls._instance = super(ModuleRegistry, cls).__new__(cls)
             cls._instance.modules = {}
+            cls._instance._synced = False
         return cls._instance
 
     def register(self, module_class):
@@ -128,17 +129,32 @@ class ModuleRegistry:
 
     def sync_tools_with_db(self):
         """Ensure all discovered modules have a corresponding Tool record in the DB."""
+        if self._synced:
+            return
+            
         from .models import Tool
-        for module in self.get_all_modules():
+        
+        # Get all registered module IDs
+        module_ids = [module.module_id for module in self.get_all_modules()]
+        
+        # Get existing tool names from DB
+        existing_tool_names = set(Tool.objects.filter(name__in=module_ids).values_list('name', flat=True))
+        
+        # Find which modules are missing from DB
+        missing_modules = [m for m in self.get_all_modules() if m.module_id not in existing_tool_names]
+        
+        # Only create missing tools
+        for module in missing_modules:
             try:
-                Tool.objects.get_or_create(
+                Tool.objects.create(
                     name=module.module_id,
-                    defaults={
-                        'status': 'not_installed',
-                        'version': getattr(module, 'version', '1.0.0')
-                    }
+                    status='not_installed',
+                    version=getattr(module, 'version', '1.0.0')
                 )
+                logger.info(f"Created Tool record for missing module: {module.module_id}")
             except Exception as e:
-                logger.debug(f"Could not sync module {module.module_id} with DB: {e}")
+                logger.debug(f"Could not create Tool record for {module.module_id}: {e}")
+        
+        self._synced = True
 
 plugin_registry = ModuleRegistry()

@@ -113,6 +113,22 @@ DATABASES = {
     'default': env.db('DATABASE_URL', default='sqlite:///db.sqlite3'),
 }
 
+if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+    DATABASES['default']['OPTIONS'] = {
+        'timeout': 20,  # 20 seconds timeout
+    }
+    # Enable WAL mode for better concurrency
+    import sqlite3
+    from django.db.backends.signals import connection_created
+    from django.dispatch import receiver
+
+    @receiver(connection_created)
+    def set_sqlite_pragma(sender, connection, **kwargs):
+        if connection.vendor == 'sqlite':
+            cursor = connection.cursor()
+            cursor.execute('PRAGMA journal_mode=WAL;')
+            cursor.execute('PRAGMA synchronous=NORMAL;')
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
