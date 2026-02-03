@@ -29,3 +29,4 @@ SolsticeOps uses Git submodules for its modules. Available modules:
 - [Docker](https://github.com/SolsticeOps/SolsticeOps-docker)
 - [Kubernetes](https://github.com/SolsticeOps/SolsticeOps-k8s)
 - [Jenkins](https://github.com/SolsticeOps/SolsticeOps-jenkins)
+- [Ollama](https://github.com/SolsticeOps/SolsticeOps-ollama)
