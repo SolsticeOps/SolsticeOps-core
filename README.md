@@ -4,6 +4,14 @@ SolsticeOps is a modular DevOps management dashboard.
 
 [Русская версия](README-ru_RU.md)
 
+## Screenshots
+
+[Dashboard](docs/images/dashboard/)
+[Docker](docs/images/docker/)
+[K8s](docs/images/k8s/)
+[Jenkins](docs/images/jenkins/)
+[Ollama](docs/images/ollama/)
+
 ## Architecture
 This is the core component which provides:
 - User authentication

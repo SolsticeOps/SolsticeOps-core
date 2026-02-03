@@ -4,6 +4,14 @@ SolsticeOps — это модульная панель управления DevO
 
 [English Version](README.md)
 
+## Скриншоты
+
+[Dashboard](docs/images/dashboard/)
+[Docker](docs/images/docker/)
+[K8s](docs/images/k8s/)
+[Jenkins](docs/images/jenkins/)
+[Ollama](docs/images/ollama/)
+
 ## Архитектура
 Это основной компонент, который обеспечивает:
 - Аутентификацию пользователей
