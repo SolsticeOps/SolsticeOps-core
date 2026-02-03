@@ -28,9 +28,14 @@ def main():
                         break
                 
                 if not has_addrport:
+                    host = os.environ.get('HOST')
                     port = os.environ.get('PORT')
-                    if port:
+                    if host and port:
+                        sys.argv.append(f"{host}:{port}")
+                    elif port:
                         sys.argv.append(port)
+                    elif host:
+                        sys.argv.append(f"{host}:8000")
     except ImportError:
         pass
 
