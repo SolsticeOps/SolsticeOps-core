@@ -31,6 +31,13 @@ def split_at_colon_last(value):
         return value.split(':')[-1]
     return value
 
+@register.filter
+def split_at_colon_first(value):
+    """Splits string at first colon and returns the first part."""
+    if ':' in value:
+        return value.split(':', 1)[0]
+    return value
+
 @register.simple_tag
 def call_method(obj, method_name, *args):
     method = getattr(obj, method_name, None)
