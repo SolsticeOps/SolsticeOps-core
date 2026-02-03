@@ -75,24 +75,11 @@ def get_server_stats():
 
 @login_required
 def dashboard(request):
-    plugin_registry.sync_tools_with_db()
-    all_tools = Tool.objects.all()
-    # Filter tools to only those registered in plugin_registry
-    tools = []
-    for tool in all_tools:
-        module = plugin_registry.get_module(tool.name)
-        if module:
-            tool.module_version = getattr(module, 'version', '1.0.0')
-            tool.service_version = module.get_service_version() or tool.version
-            tools.append(tool)
-    
     # Hardware Info (cached or static)
     info = cpuinfo.get_cpu_info()
     
     hw_sudo = get_hw_info_sudo()
     context = {
-        'tools_nav': tools,
-        'plugin_registry': plugin_registry,
         'server_info': {
             'os': platform.system(),
             'os_release': platform.release(),
@@ -115,24 +102,10 @@ def server_stats_partial(request):
 
 @login_required
 def tool_detail(request, tool_name):
-    plugin_registry.sync_tools_with_db()
     tool = get_object_or_404(Tool, name=tool_name)
-    all_tools = Tool.objects.all()
-    
-    tools_nav = []
-    for t in all_tools:
-        module_nav = plugin_registry.get_module(t.name)
-        if module_nav:
-            t.module_version = getattr(module_nav, 'version', '1.0.0')
-            # Priority: 1. Dynamic service version, 2. Version from DB
-            t.service_version = module_nav.get_service_version() or t.version
-            tools_nav.append(t)
-    
     module = plugin_registry.get_module(tool.name)
     context = {
         'tool': tool,
-        'tools_nav': tools_nav,
-        'plugin_registry': plugin_registry,
         'is_login_page': False,
         'is_admin': False,
     }
