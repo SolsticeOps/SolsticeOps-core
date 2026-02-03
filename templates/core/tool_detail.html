@@ -128,13 +128,13 @@
 
 <div class="modal fade" id="describeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content bg-dark border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title text-white" id="describeTitle">Description</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="describeTitle">Description</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">
-                <pre id="describeContent" class="text-light p-3 small mb-0" style="height: 600px; overflow-y: auto; white-space: pre-wrap;"></pre>
+                <pre id="describeContent" class="p-3 small mb-0" style="height: 600px; overflow-y: auto; white-space: pre-wrap;"></pre>
             </div>
         </div>
     </div>
@@ -142,21 +142,22 @@
 
 <div class="modal fade" id="yamlModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content bg-dark border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title text-white" id="yamlModalTitle">Edit YAML</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="yamlModalTitle">Edit YAML</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">
                 <div id="yamlEditor" style="height: 600px; width: 100%;"></div>
             </div>
-            <div class="modal-footer border-secondary">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="saveYaml()">Save</button>
             </div>
         </div>
     </div>
 </div>
+
 
 {% endblock %}
 
