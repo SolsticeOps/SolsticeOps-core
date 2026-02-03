@@ -24,6 +24,13 @@ def split_env(value):
         return value.split('=', 1)
     return value, ''
 
+@register.filter
+def split_at_colon_last(value):
+    """Splits string at last colon and returns the last part."""
+    if ':' in value:
+        return value.split(':')[-1]
+    return value
+
 @register.simple_tag
 def call_method(obj, method_name, *args):
     method = getattr(obj, method_name, None)
