@@ -263,7 +263,14 @@
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.kwargs.tool_name == tool.name %}active{% endif %}" href="{% url 'tool_detail' tool.name %}">
                             <i class="si si-{{ tool.get_icon_class }}" style="color: #ffffff !important;"></i>
-                            {{ tool.get_name_display }}
+                            <div class="d-flex flex-column" style="line-height: 1.2;">
+                                <span>{{ tool.get_name_display }}</span>
+                                {% load core_tags %}
+                                {% call_method plugin_registry "get_module" tool.name as module_obj %}
+                                {% if module_obj.version %}
+                                <span style="font-size: 10px; color: #71717a;">v{{ module_obj.version }}</span>
+                                {% endif %}
+                            </div>
                             <span class="status-dot {% if tool.status == 'installed' %}bg-success{% elif tool.status == 'installing' %}bg-warning status-pulsate{% elif tool.status == 'error' %}bg-danger{% else %}bg-secondary opacity-50{% endif %}"></span>
                         </a>
                     </li>

@@ -85,6 +85,7 @@ def dashboard(request):
     hw_sudo = get_hw_info_sudo()
     context = {
         'tools_nav': tools,
+        'plugin_registry': plugin_registry,
         'server_info': {
             'os': platform.system(),
             'os_release': platform.release(),
@@ -115,6 +116,7 @@ def tool_detail(request, tool_name):
     context = {
         'tool': tool,
         'tools_nav': tools_nav,
+        'plugin_registry': plugin_registry,
         'is_login_page': False,
         'is_admin': False,
     }
