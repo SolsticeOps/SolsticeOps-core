@@ -3,6 +3,11 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+<style>
+    .hardware-table th {
+        background-color: transparent !important;
+    }
+</style>
 <div class="mb-5">
     <h1 class="h3 fw-bold tracking-tight mb-1">Infrastructure</h1>
     <p class="text-muted small">Real-time system health and resource utilization.</p>
@@ -23,9 +28,9 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-12">
-                        <table class="table table-borderless mb-0">
+                        <table class="table table-borderless mb-0 hardware-table">
                             <tr>
-                                <th class="text-muted fw-normal">OS</th>
+                                <th class="text-muted fw-normal" style="width: 200px;">OS</th>
                                 <td>{{ server_info.os }} ({{ server_info.os_release }})</td>
                             </tr>
                             <tr>

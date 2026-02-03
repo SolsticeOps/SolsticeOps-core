@@ -7,6 +7,33 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'solstice_ops.settings')
+
+    # Load environment variables from .env
+    try:
+        import environ
+        from pathlib import Path
+        BASE_DIR = Path(__file__).resolve().parent
+        env_file = BASE_DIR / '.env'
+        if env_file.exists():
+            environ.Env.read_env(str(env_file))
+            
+            # If 'runserver' is used without an explicit port, use PORT from .env
+            if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
+                # Check if any argument looks like an addrport (positional)
+                # Django's runserver positional arg is usually the last one if it doesn't start with -
+                has_addrport = False
+                for arg in sys.argv[2:]:
+                    if not arg.startswith('-'):
+                        has_addrport = True
+                        break
+                
+                if not has_addrport:
+                    port = os.environ.get('PORT')
+                    if port:
+                        sys.argv.append(port)
+    except ImportError:
+        pass
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

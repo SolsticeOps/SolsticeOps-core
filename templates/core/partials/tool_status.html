@@ -50,7 +50,13 @@
     <div class="alert alert-success d-flex align-items-center mb-0 mt-auto">
         <i class="bi bi-check-circle-fill me-3 h4 mb-0"></i>
         <div>
-            <strong>Service is running!</strong> {{ tool.get_name_display }} version {{ tool.version|default:"latest" }} is currently installed and operational.
+            <strong>Service is running!</strong> {{ tool.get_name_display }}
+            {% if service_version %}
+            version {{ service_version }}
+            {% else %}
+            version latest
+            {% endif %}
+            is currently installed and operational.
         </div>
     </div>
     

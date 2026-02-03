@@ -78,7 +78,13 @@ def dashboard(request):
     plugin_registry.sync_tools_with_db()
     all_tools = Tool.objects.all()
     # Filter tools to only those registered in plugin_registry
-    tools = [tool for tool in all_tools if plugin_registry.get_module(tool.name)]
+    tools = []
+    for tool in all_tools:
+        module = plugin_registry.get_module(tool.name)
+        if module:
+            tool.module_version = getattr(module, 'version', '1.0.0')
+            tool.service_version = module.get_service_version() or tool.version
+            tools.append(tool)
     
     # Hardware Info (cached or static)
     info = cpuinfo.get_cpu_info()
@@ -112,7 +118,15 @@ def tool_detail(request, tool_name):
     plugin_registry.sync_tools_with_db()
     tool = get_object_or_404(Tool, name=tool_name)
     all_tools = Tool.objects.all()
-    tools_nav = [t for t in all_tools if plugin_registry.get_module(t.name)]
+    
+    tools_nav = []
+    for t in all_tools:
+        module_nav = plugin_registry.get_module(t.name)
+        if module_nav:
+            t.module_version = getattr(module_nav, 'version', '1.0.0')
+            # Priority: 1. Dynamic service version, 2. Version from DB
+            t.service_version = module_nav.get_service_version() or t.version
+            tools_nav.append(t)
     
     module = plugin_registry.get_module(tool.name)
     context = {
@@ -131,6 +145,7 @@ def tool_detail(request, tool_name):
         # Add dynamic module properties to context
         context['resource_tabs'] = module.get_resource_tabs()
         context['module'] = module
+        context['service_version'] = module.get_service_version() or tool.version
 
         # Handle HTMX requests
         if request.headers.get('HX-Request'):

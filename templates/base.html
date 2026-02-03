@@ -271,11 +271,9 @@
                             {% endif %}
                             <div class="d-flex flex-column" style="line-height: 1.2;">
                                 <span>{{ tool.get_name_display }}</span>
-                                {% load core_tags %}
-                                {% call_method plugin_registry "get_module" tool.name as module_obj %}
-                                {% if module_obj.version %}
-                                <span style="font-size: 10px; color: #71717a;">v{{ module_obj.version }}</span>
-                                {% endif %}
+                                <span style="font-size: 10px; color: #71717a;">
+                                    v{{ tool.module_version }}{% if tool.service_version %} | {{ tool.service_version }}{% endif %}
+                                </span>
                             </div>
                             <span class="status-dot {% if tool.status == 'installed' %}bg-success{% elif tool.status == 'installing' %}bg-warning status-pulsate{% elif tool.status == 'error' %}bg-danger{% else %}bg-secondary opacity-50{% endif %}"></span>
                         </a>

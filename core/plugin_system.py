@@ -24,6 +24,10 @@ class BaseModule(ABC):
     description = ""
     version = "1.0.0"
 
+    def get_service_version(self):
+        """Return the version of the actual service (e.g., '0.15.4' for Ollama)."""
+        return None
+
     def get_urls(self):
         """Return a list of URL patterns for this module."""
         return []
