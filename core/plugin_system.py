@@ -114,7 +114,23 @@ class ModuleRegistry:
                     # Try to import 'module' from the package
                     module_pkg = importlib.import_module(f'modules.{item}.module')
                     if hasattr(module_pkg, 'Module'):
-                        self.register(module_pkg.Module)
+                        module_class = module_pkg.Module
+                        self.register(module_class)
+                        
+                        # Automatically ensure Tool record exists in DB
+                        try:
+                            from .models import Tool
+                            module_instance = module_class()
+                            Tool.objects.get_or_create(
+                                name=module_instance.module_id,
+                                defaults={
+                                    'status': 'not_installed',
+                                    'version': getattr(module_instance, 'version', '1.0.0')
+                                }
+                            )
+                        except Exception as db_err:
+                            # Might fail during migrations or if DB not ready
+                            logger.debug(f"Could not auto-register {item} in DB: {db_err}")
                 except Exception as e:
                     logger.error(f"Failed to load module {item}: {e}")
 
