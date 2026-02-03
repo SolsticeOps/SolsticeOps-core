@@ -1,16 +1,14 @@
-<p style="text-align: center; height: 300px;">
-    <picture>
-        <source
-            srcset="docs/images/logo_dark.png"
-            media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
-        />
-        <source
-            srcset="docs/images/logo_light.png"
-            media="(prefers-color-scheme: dark)"
-        />
-        <img src="docs/images/logo_light.png" />
-    </picture>
-</p>
+<picture>
+    <source
+        srcset="docs/images/logo_dark.png"
+        media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
+    />
+    <source
+        srcset="docs/images/logo_light.png"
+        media="(prefers-color-scheme: dark)"
+    />
+    <img src="docs/images/logo_light.png" />
+</picture>
 
 # SolsticeOps-core
 
