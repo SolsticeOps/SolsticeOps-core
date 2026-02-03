@@ -13,7 +13,13 @@
 
     <div class="d-flex align-items-center">
         <div class="border rounded-3 me-3 d-flex align-items-center justify-content-center shadow-sm" style="background-color: var(--icon-box); width: 64px !important; height: 64px !important; flex-shrink: 0;">
-            <i class="si si-{{ tool.get_icon_class }} fs-3" style="color: var(--text-main);"></i>
+            {% if tool.get_custom_icon_svg %}
+                <div style="width: 32px; height: 32px; fill: var(--text-main); display: flex; align-items: center; justify-content: center;">
+                    {{ tool.get_custom_icon_svg|safe }}
+                </div>
+            {% else %}
+                <i class="si si-{{ tool.get_icon_class }} fs-3" style="color: var(--text-main);"></i>
+            {% endif %}
         </div>
         <div>
             <h1 class="h3 fw-bold mb-0">{{ tool.get_name_display }}</h1>

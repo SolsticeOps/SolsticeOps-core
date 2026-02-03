@@ -82,6 +82,9 @@ Override default paths if necessary:
 def get_icon_class(self):
     return "simpleicons-name"  # Uses Simple Icons
 
+def get_custom_icon_svg(self):
+    return '<svg ...>...</svg>'  # Optional: Custom SVG icon (takes precedence)
+
 def get_template_name(self):
     return "core/modules/custom_detail.html"
 ```

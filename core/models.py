@@ -42,3 +42,10 @@ class Tool(models.Model):
         if module:
             return module.get_icon_class()
         return self.name
+
+    def get_custom_icon_svg(self):
+        from .plugin_system import plugin_registry
+        module = plugin_registry.get_module(self.name)
+        if module:
+            return module.get_custom_icon_svg()
+        return None

@@ -36,6 +36,10 @@ class BaseModule(ABC):
         """Return the Simple Icons class name for this module."""
         return self.module_id
 
+    def get_custom_icon_svg(self):
+        """Return a custom SVG icon for this module as a string."""
+        return None
+
     def get_template_name(self):
         """Return the template name for the tool detail view."""
         return f"core/modules/{self.module_id}.html"

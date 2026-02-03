@@ -82,6 +82,9 @@ def get_resource_tabs(self):
 def get_icon_class(self):
     return "simpleicons-name"  # Использует Simple Icons
 
+def get_custom_icon_svg(self):
+    return '<svg ...>...</svg>'  # Опционально: кастомная SVG иконка (имеет приоритет)
+
 def get_template_name(self):
     return "core/modules/custom_detail.html"
 ```

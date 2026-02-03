@@ -262,7 +262,13 @@
                     {% for tool in tools_nav %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.kwargs.tool_name == tool.name %}active{% endif %}" href="{% url 'tool_detail' tool.name %}">
-                            <i class="si si-{{ tool.get_icon_class }}" style="color: #ffffff !important;"></i>
+                            {% if tool.get_custom_icon_svg %}
+                                <div class="custom-icon-wrapper" style="width: 1rem; height: 1rem; margin-right: 0.75rem; display: flex; align-items: center; justify-content: center; fill: currentColor;">
+                                    {{ tool.get_custom_icon_svg|safe }}
+                                </div>
+                            {% else %}
+                                <i class="si si-{{ tool.get_icon_class }}" style="color: #ffffff !important;"></i>
+                            {% endif %}
                             <div class="d-flex flex-column" style="line-height: 1.2;">
                                 <span>{{ tool.get_name_display }}</span>
                                 {% load core_tags %}
