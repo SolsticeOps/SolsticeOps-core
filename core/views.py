@@ -75,6 +75,7 @@ def get_server_stats():
 
 @login_required
 def dashboard(request):
+    plugin_registry.sync_tools_with_db()
     all_tools = Tool.objects.all()
     # Filter tools to only those registered in plugin_registry
     tools = [tool for tool in all_tools if plugin_registry.get_module(tool.name)]
@@ -108,6 +109,7 @@ def server_stats_partial(request):
 
 @login_required
 def tool_detail(request, tool_name):
+    plugin_registry.sync_tools_with_db()
     tool = get_object_or_404(Tool, name=tool_name)
     all_tools = Tool.objects.all()
     tools_nav = [t for t in all_tools if plugin_registry.get_module(t.name)]
@@ -146,6 +148,7 @@ def tool_detail(request, tool_name):
 
 @login_required
 def install_tool(request, tool_name):
+    plugin_registry.sync_tools_with_db()
     tool = get_object_or_404(Tool, name=tool_name)
     module = plugin_registry.get_module(tool.name)
     
