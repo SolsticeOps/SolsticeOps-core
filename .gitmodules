@@ -7,3 +7,6 @@
 [submodule "modules/jenkins"]
 	path = modules/jenkins
 	url = git@github.com:SolsticeOps/SolsticeOps-jenkins.git
+[submodule "modules/ollama"]
+	path = modules/ollama
+	url = git@github.com:SolsticeOps/SolsticeOps-OLLAMA.git
