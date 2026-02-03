@@ -156,3 +156,5 @@ cython_debug/
 # SolsticeOps Modules (should be submodules)
 # modules/*
 !modules/__init__.py
+
+profile/

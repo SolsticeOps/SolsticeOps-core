@@ -36,6 +36,15 @@ def main():
                         sys.argv.append(port)
                     elif host:
                         sys.argv.append(f"{host}:8000")
+                else:
+                    # If addrport is provided but is only a port, check if we should prepend HOST
+                    for i, arg in enumerate(sys.argv):
+                        if i >= 2 and not arg.startswith('-'):
+                            if ':' not in arg:
+                                host = os.environ.get('HOST')
+                                if host:
+                                    sys.argv[i] = f"{host}:{arg}"
+                            break
     except ImportError:
         pass
 
