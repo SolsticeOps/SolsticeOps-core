@@ -117,7 +117,9 @@ def get_urls(self):
 
 ### Installation Logic
 
-If your module requires a setup process (e.g., pulling a Docker image, configuring a service), implement the `install` method:
+If your module requires a setup process (e.g., pulling a Docker image, configuring a service), implement the `install` method.
+
+**Note:** If the `install` method is not implemented, the module is considered "out-of-the-box" and will be automatically marked as `installed` when discovered.
 
 ```python
 import threading
