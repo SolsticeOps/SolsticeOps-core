@@ -10,3 +10,6 @@
 [submodule "modules/ollama"]
 	path = modules/ollama
 	url = git@github.com:SolsticeOps/SolsticeOps-OLLAMA.git
+[submodule "modules/storage-manager"]
+	path = modules/storage-manager
+	url = git@github.com:SolsticeOps/SolsticeOps-storage-manager.git
