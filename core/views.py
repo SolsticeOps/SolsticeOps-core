@@ -139,7 +139,7 @@ def install_tool(request, tool_name):
     tool = get_object_or_404(Tool, name=tool_name)
     module = plugin_registry.get_module(tool.name)
     
-    if module:
+    if module and hasattr(module, 'install'):
         module.install(request, tool)
         
     return redirect('tool_detail', tool_name=tool_name)

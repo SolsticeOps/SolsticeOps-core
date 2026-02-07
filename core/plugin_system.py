@@ -80,10 +80,6 @@ class BaseModule(ABC):
         """Handle HTMX requests for this module."""
         return None
 
-    def install(self, request, tool):
-        """Handle tool installation."""
-        pass
-
     def get_terminal_session_types(self):
         """Return a dictionary of terminal session types {name: class}."""
         return {}
@@ -138,17 +134,32 @@ class ModuleRegistry:
         module_ids = [module.module_id for module in self.get_all_modules()]
         
         # Get existing tool names from DB
-        existing_tool_names = set(Tool.objects.filter(name__in=module_ids).values_list('name', flat=True))
+        existing_tools = Tool.objects.filter(name__in=module_ids)
+        existing_tool_names = set(existing_tools.values_list('name', flat=True))
         
+        # Check existing tools for "out of the box" status
+        for tool in existing_tools:
+            module = self.get_module(tool.name)
+            if module and not hasattr(module, 'install') and tool.status == 'not_installed':
+                tool.status = 'installed'
+                tool.save()
+                logger.info(f"Updated Tool {tool.name} to installed (no install method)")
+
         # Find which modules are missing from DB
         missing_modules = [m for m in self.get_all_modules() if m.module_id not in existing_tool_names]
         
         # Only create missing tools
         for module in missing_modules:
             try:
+                # If module doesn't have an install method, it's installed "out of the box"
+                status = 'not_installed'
+                if not hasattr(module, 'install'):
+                    status = 'installed'
+                    logger.info(f"Module {module.module_id} has no install method, marking as installed.")
+
                 Tool.objects.create(
                     name=module.module_id,
-                    status='not_installed',
+                    status=status,
                     version=getattr(module, 'version', '1.0.0')
                 )
                 logger.info(f"Created Tool record for missing module: {module.module_id}")
