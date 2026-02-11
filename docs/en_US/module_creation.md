@@ -159,31 +159,29 @@ def get_terminal_session_types(self):
     return {'my-session': MySession}
 ```
 
-### System Commands and Sudo
+### System Commands
 
-If your module needs to run system commands that require root privileges, use the `run_sudo_command` utility. This utility automatically handles the `SUDO_PASSWORD` from the `.env` file, ensuring a seamless experience without interactive password prompts in the terminal.
+If your module needs to run system commands, use the `run_command` utility.
+
+**Important:** SolsticeOps must be run as the **root** user. The `run_command` utility executes commands directly on the system with root privileges.
 
 ```python
-from core.utils import run_sudo_command
+from core.utils import run_command
 
 # Running a simple command
 try:
-    output = run_sudo_command(['apt-get', 'update'])
+    output = run_command(['apt-get', 'update'])
     print(output.decode())
 except Exception as e:
     logger.error(f"Command failed: {e}")
 
 # Running a command through shell (e.g., with pipes)
-run_sudo_command("curl -fsSL https://example.com/install.sh | sh", shell=True)
+run_command("curl -fsSL https://example.com/install.sh | sh", shell=True)
 
 # Providing input data to a command (e.g., fdisk)
 input_data = "n\np\n\n\n+1G\nw\n"
-run_sudo_command(['fdisk', '/dev/sdb'], input_data=input_data)
+run_command(['fdisk', '/dev/sdb'], input_data=input_data)
 ```
-
-The utility will:
-1. Use `sudo -S` if `SUDO_PASSWORD` is set in `.env`.
-2. Fallback to `sudo -n` (non-interactive) if no password is set.
 
 ## Dependency Management
 

@@ -159,31 +159,29 @@ def get_terminal_session_types(self):
     return {'my-session': MySession}
 ```
 
-### Системные команды и Sudo
+### Системные команды
 
-Если вашему модулю необходимо выполнять системные команды, требующие прав root, используйте утилиту `run_sudo_command`. Эта утилита автоматически обрабатывает `SUDO_PASSWORD` из файла `.env`, обеспечивая работу без интерактивных запросов пароля в терминале.
+Если вашему модулю необходимо выполнять системные команды, используйте утилиту `run_command`. 
+
+**Важно:** Приложение SolsticeOps должно запускаться от имени пользователя **root**. Утилита `run_command` выполняет команды напрямую в системе с правами root.
 
 ```python
-from core.utils import run_sudo_command
+from core.utils import run_command
 
 # Выполнение простой команды
 try:
-    output = run_sudo_command(['apt-get', 'update'])
+    output = run_command(['apt-get', 'update'])
     print(output.decode())
 except Exception as e:
     logger.error(f"Команда не удалась: {e}")
 
 # Выполнение команды через shell (например, с пайпами)
-run_sudo_command("curl -fsSL https://example.com/install.sh | sh", shell=True)
+run_command("curl -fsSL https://example.com/install.sh | sh", shell=True)
 
 # Передача входных данных в команду (например, для fdisk)
 input_data = "n\np\n\n\n+1G\nw\n"
-run_sudo_command(['fdisk', '/dev/sdb'], input_data=input_data)
+run_command(['fdisk', '/dev/sdb'], input_data=input_data)
 ```
-
-Утилита будет:
-1. Использовать `sudo -S`, если `SUDO_PASSWORD` задан в `.env`.
-2. Использовать `sudo -n` (неинтерактивный режим), если пароль не задан.
 
 ## Управление зависимостями
 
