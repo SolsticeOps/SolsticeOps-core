@@ -40,16 +40,22 @@ def setup():
     with open(env_path, "w") as f:
         f.write("DEBUG=True\n")
         db_url_found = False
+        csrf_found = False
         for line in lines:
             if line.startswith("DATABASE_URL="):
                 f.write(f"DATABASE_URL={db_url}\n")
                 db_url_found = True
             elif line.startswith("DEBUG="):
                 continue # Already wrote it
+            elif line.startswith("CSRF_TRUSTED_ORIGINS="):
+                csrf_found = True
+                f.write(line)
             else:
                 f.write(line)
         if not db_url_found:
             f.write(f"DATABASE_URL={db_url}\n")
+        if not csrf_found:
+            f.write("CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000\n")
 
     print(f"\nSuccess! DATABASE_URL updated in .env")
     print("Now run: python manage.py migrate")
