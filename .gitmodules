@@ -1,12 +1,12 @@
 [submodule "modules/docker"]
 	path = modules/docker
-	url = git@github.com:SolsticeOps/SolsticeOps-docker.git
+	url = https://github.com/SolsticeOps/SolsticeOps-docker.git
 [submodule "modules/k8s"]
 	path = modules/k8s
-	url = git@github.com:SolsticeOps/SolsticeOps-k8s.git
+	url = https://github.com/SolsticeOps/SolsticeOps-k8s.git
 [submodule "modules/jenkins"]
 	path = modules/jenkins
-	url = git@github.com:SolsticeOps/SolsticeOps-jenkins.git
+	url = https://github.com/SolsticeOps/SolsticeOps-jenkins.git
 [submodule "modules/ollama"]
 	path = modules/ollama
-	url = git@github.com:SolsticeOps/SolsticeOps-OLLAMA.git
+	url = https://github.com/SolsticeOps/SolsticeOps-OLLAMA.git
