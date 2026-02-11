@@ -1,6 +1,12 @@
 import os
 import environ
+import sys
 from pathlib import Path
+
+# Check if running as root
+if os.name != 'nt' and os.geteuid() != 0:
+    print("\033[91mError: This application must be run as root.\033[0m")
+    sys.exit(1)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

@@ -6,6 +6,11 @@ import sys
 
 def main():
     """Run administrative tasks."""
+    # Check if running as root
+    if os.name != 'nt' and os.geteuid() != 0:
+        print("\033[91mError: This application must be run as root.\033[0m")
+        sys.exit(1)
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'solstice_ops.settings')
 
     # Load environment variables from .env
