@@ -4,7 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def run_sudo_command(cmd, input_data=None, timeout=30, capture_output=True, shell=False, env=None, log_errors=True):
+def run_command(cmd, input_data=None, timeout=30, capture_output=True, shell=False, env=None, log_errors=True):
     """
     Runs a command. Assumes the application is already running as root.
     """

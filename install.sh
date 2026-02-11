@@ -12,12 +12,16 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}"
-echo "  ____       _HN_   _             ___              "
-echo " / ___|  ___| |  |_(_) ___ ___  / _ \ _ __  ___  "
-echo " \___ \ / _ \ | __| |/ __/ _ \| | | | '_ \/ __| "
-echo "  ___) | (_) | | |_| | (_|  __/| |_| | |_) \__ \ "
-echo " |____/ \___/|_|\__|_|\___\___| \___/| .__/|___/ "
-echo "                                     |_|         "
+
+echo "   _____       _     _   _           ____                 "
+echo "  / ____|     | |   | | (_)         / __ \\               "
+echo " | (___   ___ | |___| |_ _  ___ ___| |  | |_ __  ___      "
+echo "  \\___ \\ / _ \\| / __| __| |/ __/ _ \\ |  | | '_ \\/ __|"
+echo "  ____) | (_) | \\__ \\ |_| | (_|  __/ |__| | |_) \\__ \\ "
+echo " |_____/ \\___/|_|___/\\__|_|\\___\\___|\\____/| .__/|___/"
+echo "                                          | |             "
+echo "                                          |_|             "
+
 echo -e "${NC}"
 echo "Welcome to the SolsticeOps installation script!"
 echo "This will install the core panel and selected modules."
@@ -32,13 +36,13 @@ fi
 # 2. Interactive configuration
 echo -e "${YELLOW}--- Configuration ---${NC}"
 
-read -p "Installation directory [/opt/solstice-ops]: " INSTALL_DIR
+read -ei "/opt/solstice-ops" -p "Installation directory: " INSTALL_DIR
 INSTALL_DIR=${INSTALL_DIR:-/opt/solstice-ops}
 
-read -p "Web panel port [8000]: " PANEL_PORT
+read -ei "8000" -p "Web panel port: " PANEL_PORT
 PANEL_PORT=${PANEL_PORT:-8000}
 
-read -p "Admin username [admin]: " ADMIN_USER
+read -ei "admin" -p "Admin username: " ADMIN_USER
 ADMIN_USER=${ADMIN_USER:-admin}
 
 read -s -p "Admin password: " ADMIN_PASS
@@ -54,7 +58,7 @@ echo "1) Docker (Container management)"
 echo "2) Kubernetes (Cluster management)"
 echo "3) Jenkins (CI/CD automation)"
 echo "4) Ollama (AI Models)"
-read -p "Selection [1 2 3 4]: " MODULE_CHOICE
+read -ei "1 2 3 4" -p "Selection: " MODULE_CHOICE
 MODULE_CHOICE=${MODULE_CHOICE:-"1 2 3 4"}
 
 # 3. System dependencies
