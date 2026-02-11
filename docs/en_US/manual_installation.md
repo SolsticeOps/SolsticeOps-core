@@ -43,7 +43,7 @@ SolsticeOps-core is the central management system. Modules are added as Git subm
    pip install -r modules/{module_name}/requirements.txt
    ```
 
-6. Run the server:
+6. Run the server (as `root` user):
    ```bash
-   python manage.py runserver
+   sudo .venv/bin/python manage.py runserver
    ```

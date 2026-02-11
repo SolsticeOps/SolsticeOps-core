@@ -3,7 +3,7 @@
 SolsticeOps-core — это центральная система управления. Модули добавляются как Git-субмодули.
 
 ## Предварительные требования
-- Python 3.10+
+- Python 3.12+
 - Docker (опционально, но рекомендуется для некоторых модулей)
 - Git
 
@@ -28,6 +28,7 @@ SolsticeOps-core — это центральная система управле
 
 4. Инициализируйте базу данных:
    ```bash
+   python setup_db.py
    python manage.py migrate
    ```
 
@@ -43,7 +44,7 @@ SolsticeOps-core — это центральная система управле
    pip install -r modules/{module_name}/requirements.txt
    ```
 
-6. Запустите сервер:
+6. Запустите сервер (от имени `root`):
    ```bash
-   python manage.py runserver
+   sudo .venv/bin/python manage.py runserver
    ```

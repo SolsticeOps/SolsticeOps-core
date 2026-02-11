@@ -3,6 +3,16 @@
 # SolsticeOps Installation Script
 # This script must be run as root.
 
+#    _____       _     _   _           ____            
+#   / ____|     | |   | | (_)         / __ \           
+#  | (___   ___ | |___| |_ _  ___ ___| |  | |_ __  ___ 
+#   \___ \ / _ \| / __| __| |/ __/ _ \ |  | | '_ \/ __|
+#   ____) | (_) | \__ \ |_| | (_|  __/ |__| | |_) \__ \
+#  |_____/ \___/|_|___/\__|_|\___\___|\____/| .__/|___/
+#                                           | |        
+#                                           |_|        
+
+
 set -e
 
 # Colors for output
@@ -33,7 +43,23 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# 2. Interactive configuration
+# 2. Fix stdin for interactive input when piped (curl | bash)
+if [[ ! -t 0 ]]; then
+    if [[ -e /dev/tty ]]; then
+        echo -e "${YELLOW}Detected non-interactive execution (piped input)."
+        echo -e "Redirecting input to terminal for configuration...${NC}"
+        exec < /dev/tty
+    else
+        echo -e "${RED}Error: No terminal available for interactive input."
+        echo -e "This script requires user interaction for security reasons (password setup)."
+        echo -e "Please download and run the script directly:"
+        echo -e "  curl -sSL https://raw.githubusercontent.com/SolsticeOps/SolsticeOps-core/refs/heads/main/install.sh -o install.sh"
+        echo -e "  sudo bash install.sh${NC}"
+        exit 1
+    fi
+fi
+
+# 3. Interactive configuration
 echo -e "${YELLOW}--- Configuration ---${NC}"
 
 read -ei "/opt/solstice-ops" -p "Installation directory: " INSTALL_DIR
@@ -58,15 +84,16 @@ echo "1) Docker (Container management)"
 echo "2) Kubernetes (Cluster management)"
 echo "3) Jenkins (CI/CD automation)"
 echo "4) Ollama (AI Models)"
-read -ei "1 2 3 4" -p "Selection: " MODULE_CHOICE
+echo "*You can install these and other modules through the interface"
+read -ei "" -p "Selection: " MODULE_CHOICE
 MODULE_CHOICE=${MODULE_CHOICE:-"1 2 3 4"}
 
-# 3. System dependencies
+# 4. System dependencies
 echo -e "\n${YELLOW}--- Installing System Dependencies ---${NC}"
 apt-get update
 apt-get install -y python3 python3-pip python3-venv git curl libmagic1
 
-# 4. Clone repository
+# 5. Clone repository
 echo -e "\n${YELLOW}--- Cloning Repository ---${NC}"
 if [[ -d "$INSTALL_DIR" ]]; then
     echo -e "${YELLOW}Warning: Directory $INSTALL_DIR already exists. Backing up to ${INSTALL_DIR}.bak${NC}"
@@ -76,14 +103,14 @@ fi
 git clone https://github.com/SolsticeOps/SolsticeOps-core.git "$INSTALL_DIR"
 cd "$INSTALL_DIR"
 
-# 5. Virtual environment
+# 6. Virtual environment
 echo -e "\n${YELLOW}--- Setting up Virtual Environment ---${NC}"
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# 6. Initialize submodules and install their dependencies
+# 7. Initialize submodules and install their dependencies
 echo -e "\n${YELLOW}--- Initializing Modules ---${NC}"
 for choice in $MODULE_CHOICE; do
     case $choice in
@@ -114,7 +141,7 @@ for choice in $MODULE_CHOICE; do
     esac
 done
 
-# 7. Create .env file
+# 8. Create .env file
 echo -e "\n${YELLOW}--- Creating Configuration ---${NC}"
 SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
 cat > .env <<EOF
@@ -126,14 +153,14 @@ CSRF_TRUSTED_ORIGINS=http://localhost:$PANEL_PORT,http://127.0.0.1:$PANEL_PORT
 PORT=$PANEL_PORT
 EOF
 
-# 8. Database and Admin user
+# 9. Database and Admin user
 echo -e "\n${YELLOW}--- Initializing Database ---${NC}"
 python3 manage.py migrate
 
 echo -e "\n${YELLOW}--- Creating Admin User ---${NC}"
 python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='$ADMIN_USER').delete(); User.objects.create_superuser('$ADMIN_USER', 'admin@example.com', '$ADMIN_PASS')"
 
-# 9. Systemd service
+# 10. Systemd service
 echo -e "\n${YELLOW}--- Creating Systemd Service ---${NC}"
 cat > /etc/systemd/system/solstice-ops.service <<EOF
 [Unit]
@@ -156,7 +183,7 @@ systemctl daemon-reload
 systemctl enable solstice-ops
 systemctl start solstice-ops
 
-# 10. Final output
+# 11. Final output
 echo -e "\n${GREEN}====================================================${NC}"
 echo -e "${GREEN}SolsticeOps installed successfully!${NC}"
 echo -e "Access the panel at: ${YELLOW}http://$(curl -s ifconfig.me):$PANEL_PORT${NC}"

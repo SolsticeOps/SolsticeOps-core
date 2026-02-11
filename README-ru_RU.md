@@ -18,6 +18,12 @@ SolsticeOps — это модульная панель управления DevO
 
 [English Version](README.md)
 
+## Установка
+
+```sh
+curl -sSL https://raw.githubusercontent.com/SolsticeOps/SolsticeOps-core/refs/heads/main/install.sh | sudo bash
+```
+
 ## Скриншоты
 
 [Dashboard](docs/images/dashboard/)
@@ -36,7 +42,7 @@ SolsticeOps — это модульная панель управления DevO
 
 ## Документация
 Подробная документация доступна в директории `docs/ru_RU/`.
-- [Установка](docs/ru_RU/installation.md)
+- [Ручная установка](docs/ru_RU/manual_installation.md)
 - [Создание модулей](docs/ru_RU/module_creation.md)
 - [Справочник API](docs/ru_RU/api_reference.md)
 

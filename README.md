@@ -18,6 +18,12 @@ SolsticeOps is a modular DevOps management dashboard.
 
 [Русская версия](README-ru_RU.md)
 
+## Installation
+
+```sh
+curl -sSL https://raw.githubusercontent.com/SolsticeOps/SolsticeOps-core/refs/heads/main/install.sh | sudo bash
+```
+
 ## Screenshots
 
 [Dashboard](docs/images/dashboard/)
@@ -36,7 +42,7 @@ This is the core component which provides:
 
 ## Documentation
 Detailed documentation is available in the `docs/en_US/` directory.
-- [Installation](docs/en_US/installation.md)
+- [Manual installation](docs/en_US/manual_installation.md)
 - [Creating Modules](docs/en_US/module_creation.md)
 - [API Reference](docs/en_US/api_reference.md)
 
