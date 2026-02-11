@@ -11,19 +11,19 @@ from django.http import HttpResponseForbidden, HttpResponse
 from django.contrib.auth.decorators import login_required
 from .models import Tool
 from .plugin_system import plugin_registry
+from .utils import run_sudo_command
 
 def get_hw_info_sudo():
     """Fetches detailed HW info using sudo dmidecode."""
     data = {'ram_slots': [], 'motherboard': 'Unknown'}
     try:
         # Motherboard
-        # Use -n (non-interactive) to avoid password prompt
-        mb_out = subprocess.check_output(['sudo', '-n', 'dmidecode', '-s', 'baseboard-product-name'], stderr=subprocess.DEVNULL, timeout=2).decode().strip()
+        mb_out = run_sudo_command(['dmidecode', '-s', 'baseboard-product-name'], timeout=2).decode().strip()
         if mb_out:
             data['motherboard'] = mb_out
         
         # RAM Slots
-        ram_out = subprocess.check_output(['sudo', '-n', 'dmidecode', '-t', 'memory'], stderr=subprocess.DEVNULL, timeout=2).decode()
+        ram_out = run_sudo_command(['dmidecode', '-t', 'memory'], timeout=2).decode()
         # Simple regex to find Size and Speed for each handle
         sizes = re.findall(r'Size: (\d+ [GM]B)', ram_out)
         speeds = re.findall(r'Configured Memory Speed: (\d+ MT/s)', ram_out)

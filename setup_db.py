@@ -31,6 +31,8 @@ def setup():
         print("Invalid choice")
         sys.exit(1)
 
+    sudo_password = input("Sudo Password (optional, leave empty if NOPASSWD configured): ")
+
     env_path = ".env"
     lines = []
     if os.path.exists(env_path):
@@ -41,6 +43,7 @@ def setup():
         f.write("DEBUG=True\n")
         db_url_found = False
         csrf_found = False
+        sudo_found = False
         for line in lines:
             if line.startswith("DATABASE_URL="):
                 f.write(f"DATABASE_URL={db_url}\n")
@@ -50,12 +53,17 @@ def setup():
             elif line.startswith("CSRF_TRUSTED_ORIGINS="):
                 csrf_found = True
                 f.write(line)
+            elif line.startswith("SUDO_PASSWORD="):
+                sudo_found = True
+                f.write(line)
             else:
                 f.write(line)
         if not db_url_found:
             f.write(f"DATABASE_URL={db_url}\n")
         if not csrf_found:
             f.write("CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000\n")
+        if not sudo_found:
+            f.write(f"SUDO_PASSWORD={sudo_password}\n")
 
     print(f"\nSuccess! DATABASE_URL updated in .env")
     print("Now run: python manage.py migrate")
