@@ -83,14 +83,34 @@ source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# 6. Initialize submodules
+# 6. Initialize submodules and install their dependencies
 echo -e "\n${YELLOW}--- Initializing Modules ---${NC}"
 for choice in $MODULE_CHOICE; do
     case $choice in
-        1) git submodule update --init modules/docker ;;
-        2) git submodule update --init modules/k8s ;;
-        3) git submodule update --init modules/jenkins ;;
-        4) git submodule update --init modules/ollama ;;
+        1) 
+            git submodule update --init modules/docker
+            if [[ -f "modules/docker/requirements.txt" ]]; then
+                pip install -r modules/docker/requirements.txt
+            fi
+            ;;
+        2) 
+            git submodule update --init modules/k8s
+            if [[ -f "modules/k8s/requirements.txt" ]]; then
+                pip install -r modules/k8s/requirements.txt
+            fi
+            ;;
+        3) 
+            git submodule update --init modules/jenkins
+            if [[ -f "modules/jenkins/requirements.txt" ]]; then
+                pip install -r modules/jenkins/requirements.txt
+            fi
+            ;;
+        4) 
+            git submodule update --init modules/ollama
+            if [[ -f "modules/ollama/requirements.txt" ]]; then
+                pip install -r modules/ollama/requirements.txt
+            fi
+            ;;
     esac
 done
 
