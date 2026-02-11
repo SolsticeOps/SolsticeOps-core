@@ -25,7 +25,10 @@ def run_sudo_command(cmd, input_data=None, timeout=30, capture_output=True, shel
                 return subprocess.run(full_cmd, input=input_data, stderr=subprocess.STDOUT, timeout=timeout, check=True, shell=True, env=env)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             if log_errors and hasattr(e, 'output') and e.output:
-                logger.error(f"Sudo shell command failed: {e.output.decode()}")
+                output_str = e.output.decode().strip()
+                # Suppress common status-related "non-errors"
+                if output_str not in ['inactive', 'failed', 'deactivating', 'not-found']:
+                    logger.error(f"Sudo shell command failed: {output_str}")
             raise e
     else:
         # cmd should be a list
@@ -55,7 +58,10 @@ def run_sudo_command(cmd, input_data=None, timeout=30, capture_output=True, shel
                     return subprocess.run(full_cmd, input=combined_input, stderr=subprocess.STDOUT, timeout=timeout, check=True, env=env)
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                 if log_errors and hasattr(e, 'output') and e.output:
-                    logger.error(f"Sudo command failed: {e.output.decode()}")
+                    output_str = e.output.decode().strip()
+                    # Suppress common status-related "non-errors"
+                    if output_str not in ['inactive', 'failed', 'deactivating', 'not-found']:
+                        logger.error(f"Sudo command failed: {output_str}")
                 raise e
         else:
             # Fallback to non-interactive sudo
