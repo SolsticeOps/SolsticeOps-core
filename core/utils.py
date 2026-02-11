@@ -4,7 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def run_sudo_command(cmd, input_data=None, timeout=30, capture_output=True, shell=False):
+def run_sudo_command(cmd, input_data=None, timeout=30, capture_output=True, shell=False, env=None):
     """
     Runs a command with sudo, optionally providing a password from .env.
     """
@@ -20,9 +20,9 @@ def run_sudo_command(cmd, input_data=None, timeout=30, capture_output=True, shel
         
         try:
             if capture_output:
-                return subprocess.check_output(full_cmd, input=input_data, stderr=subprocess.STDOUT, timeout=timeout, shell=True)
+                return subprocess.check_output(full_cmd, input=input_data, stderr=subprocess.STDOUT, timeout=timeout, shell=True, env=env)
             else:
-                return subprocess.run(full_cmd, input=input_data, stderr=subprocess.STDOUT, timeout=timeout, check=True, shell=True)
+                return subprocess.run(full_cmd, input=input_data, stderr=subprocess.STDOUT, timeout=timeout, check=True, shell=True, env=env)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             if hasattr(e, 'output') and e.output:
                 logger.error(f"Sudo shell command failed: {e.output.decode()}")
@@ -50,9 +50,9 @@ def run_sudo_command(cmd, input_data=None, timeout=30, capture_output=True, shel
             
             try:
                 if capture_output:
-                    return subprocess.check_output(full_cmd, input=combined_input, stderr=subprocess.STDOUT, timeout=timeout)
+                    return subprocess.check_output(full_cmd, input=combined_input, stderr=subprocess.STDOUT, timeout=timeout, env=env)
                 else:
-                    return subprocess.run(full_cmd, input=combined_input, stderr=subprocess.STDOUT, timeout=timeout, check=True)
+                    return subprocess.run(full_cmd, input=combined_input, stderr=subprocess.STDOUT, timeout=timeout, check=True, env=env)
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                 if hasattr(e, 'output') and e.output:
                     logger.error(f"Sudo command failed: {e.output.decode()}")
@@ -62,9 +62,9 @@ def run_sudo_command(cmd, input_data=None, timeout=30, capture_output=True, shel
             full_cmd = ['sudo', '-n'] + cmd
             try:
                 if capture_output:
-                    return subprocess.check_output(full_cmd, input=input_data, stderr=subprocess.STDOUT, timeout=timeout)
+                    return subprocess.check_output(full_cmd, input=input_data, stderr=subprocess.STDOUT, timeout=timeout, env=env)
                 else:
-                    return subprocess.run(full_cmd, input=input_data, stderr=subprocess.STDOUT, timeout=timeout, check=True)
+                    return subprocess.run(full_cmd, input=input_data, stderr=subprocess.STDOUT, timeout=timeout, check=True, env=env)
             except subprocess.CalledProcessError as e:
                 # If it failed due to password requirement, log a helpful message
                 if e.returncode == 1 and "sudo: a password is required" in (e.output.decode() if e.output else ""):
