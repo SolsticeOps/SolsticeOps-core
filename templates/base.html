@@ -702,12 +702,16 @@
         function setTheme(theme) {
             document.documentElement.setAttribute('data-bs-theme', theme);
             localStorage.setItem('theme', theme);
-            themeIcon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+            if (themeIcon) {
+                themeIcon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+            }
         }
-        themeToggle.addEventListener('click', function() {
-            var currentTheme = document.documentElement.getAttribute('data-bs-theme');
-            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-        });
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function() {
+                var currentTheme = document.documentElement.getAttribute('data-bs-theme');
+                setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            });
+        }
         var savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
 

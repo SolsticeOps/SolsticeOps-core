@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
 from core.views import (
     dashboard, server_stats_partial, tool_detail, install_tool
 )
@@ -20,3 +22,7 @@ urlpatterns = [
 # Register module URLs
 for module in plugin_registry.get_all_modules():
     urlpatterns += module.get_urls()
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static('/static/', document_root=settings.BASE_DIR / 'static')

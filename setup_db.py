@@ -38,11 +38,14 @@ def setup():
             lines = f.readlines()
     
     with open(env_path, "w") as f:
+        f.write("DEBUG=True\n")
         db_url_found = False
         for line in lines:
             if line.startswith("DATABASE_URL="):
                 f.write(f"DATABASE_URL={db_url}\n")
                 db_url_found = True
+            elif line.startswith("DEBUG="):
+                continue # Already wrote it
             else:
                 f.write(line)
         if not db_url_found:
