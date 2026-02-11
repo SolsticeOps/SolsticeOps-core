@@ -21,7 +21,8 @@ SolsticeOps is a modular DevOps management dashboard.
 ## Installation
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/SolsticeOps/SolsticeOps-core/refs/heads/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/SolsticeOps/SolsticeOps-core/refs/heads/main/install.sh -o /tmp/install.sh
+sudo bash /tmp/install.sh
 ```
 
 ## Screenshots
