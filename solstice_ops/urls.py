@@ -4,7 +4,7 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from core.views import (
-    dashboard, server_stats_partial, tool_detail, install_tool
+    dashboard, server_stats_partial, tool_detail, install_tool, add_module
 )
 from core.plugin_system import plugin_registry
 
@@ -13,6 +13,7 @@ urlpatterns = [
     path('', dashboard, name='dashboard'),
     path('tool/<str:tool_name>/', tool_detail, name='tool_detail'),
     path('tool/<str:tool_name>/install/', install_tool, name='install_tool'),
+    path('module/add/', add_module, name='add_module'),
     path('api/stats/', server_stats_partial, name='server_stats_partial'),
     path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),

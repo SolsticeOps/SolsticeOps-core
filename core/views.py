@@ -11,19 +11,19 @@ from django.http import HttpResponseForbidden, HttpResponse
 from django.contrib.auth.decorators import login_required
 from .models import Tool
 from .plugin_system import plugin_registry
-from .utils import run_sudo_command
+from .utils import run_command
 
 def get_hw_info_sudo():
     """Fetches detailed HW info using sudo dmidecode."""
     data = {'ram_slots': [], 'motherboard': 'Unknown'}
     try:
         # Motherboard
-        mb_out = run_sudo_command(['dmidecode', '-s', 'baseboard-product-name'], timeout=2).decode().strip()
+        mb_out = run_command(['dmidecode', '-s', 'baseboard-product-name'], timeout=2).decode().strip()
         if mb_out:
             data['motherboard'] = mb_out
         
         # RAM Slots
-        ram_out = run_sudo_command(['dmidecode', '-t', 'memory'], timeout=2).decode()
+        ram_out = run_command(['dmidecode', '-t', 'memory'], timeout=2).decode()
         # Simple regex to find Size and Speed for each handle
         sizes = re.findall(r'Size: (\d+ [GM]B)', ram_out)
         speeds = re.findall(r'Configured Memory Speed: (\d+ MT/s)', ram_out)
@@ -144,3 +144,32 @@ def install_tool(request, tool_name):
         module.install(request, tool)
         
     return redirect('tool_detail', tool_name=tool_name)
+
+@login_required
+def add_module(request):
+    if request.method == 'POST':
+        repo_url = request.POST.get('repo_url')
+        if repo_url:
+            try:
+                # Basic validation: ensure it looks like a git URL
+                if not repo_url.endswith('.git') and 'github.com' not in repo_url:
+                    return HttpResponse("Invalid repository URL", status=400)
+                
+                # Extract module name from URL
+                module_name = repo_url.split('/')[-1].replace('.git', '').replace('SolsticeOps-', '').lower()
+                module_path = os.path.join('modules', module_name)
+                
+                if os.path.exists(module_path):
+                    return HttpResponse(f"Module '{module_name}' already exists", status=400)
+                
+                # Use git submodule add
+                run_command(['git', 'submodule', 'add', repo_url, module_path], timeout=300)
+                
+                # Trigger module discovery (this usually happens on server restart, 
+                # but we can try to trigger it or just tell the user to restart)
+                # For now, we assume the user will restart or the watcher will catch it.
+                
+                return redirect('dashboard')
+            except Exception as e:
+                return HttpResponse(f"Error adding module: {str(e)}", status=500)
+    return redirect('dashboard')

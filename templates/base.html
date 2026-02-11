@@ -302,6 +302,11 @@
                         </a>
                     </li>
                     {% endfor %}
+                    <li class="nav-item mt-3">
+                        <button class="nav-link border-0 bg-transparent w-100 text-start" data-bs-toggle="modal" data-bs-target="#addModuleModal">
+                            <i class="bi bi-plus-circle text-primary"></i> Add module
+                        </button>
+                    </li>
                 </ul>
                 <div class="mt-auto p-4 border-top border-secondary border-opacity-10">
                     <div class="small fw-semibold text-white mb-3">{{ user.username }}</div>
@@ -349,6 +354,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
 
     <!-- Shared Modals -->
+    <div class="modal fade" id="addModuleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Module</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{% url 'add_module' %}" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="repo_url" class="form-label">Module Repository URL</label>
+                            <input type="url" class="form-control" id="repo_url" name="repo_url" placeholder="https://github.com/SolsticeOps/SolsticeOps-example.git" required>
+                            <div class="form-text">Enter the Git repository URL of the module you want to add.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Module</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
         <div class="modal-dialog modal-xl">
             <div class="modal-content bg-dark border-secondary">
