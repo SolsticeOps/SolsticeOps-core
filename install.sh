@@ -131,7 +131,7 @@ echo -e "\n${YELLOW}--- Initializing Database ---${NC}"
 python3 manage.py migrate
 
 echo -e "\n${YELLOW}--- Creating Admin User ---${NC}"
-python3 manage.py shell -c "from django.contrib.auth.models import User; User.objects.filter(username='$ADMIN_USER').delete(); User.objects.create_superuser('$ADMIN_USER', 'admin@example.com', '$ADMIN_PASS')"
+python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='$ADMIN_USER').delete(); User.objects.create_superuser('$ADMIN_USER', 'admin@example.com', '$ADMIN_PASS')"
 
 # 9. Systemd service
 echo -e "\n${YELLOW}--- Creating Systemd Service ---${NC}"
