@@ -17,12 +17,13 @@ def get_hw_info_sudo():
     data = {'ram_slots': [], 'motherboard': 'Unknown'}
     try:
         # Motherboard
-        mb_out = subprocess.check_output(['sudo', 'dmidecode', '-s', 'baseboard-product-name'], stderr=subprocess.DEVNULL).decode().strip()
+        # Use -n (non-interactive) to avoid password prompt
+        mb_out = subprocess.check_output(['sudo', '-n', 'dmidecode', '-s', 'baseboard-product-name'], stderr=subprocess.DEVNULL, timeout=2).decode().strip()
         if mb_out:
             data['motherboard'] = mb_out
         
         # RAM Slots
-        ram_out = subprocess.check_output(['sudo', 'dmidecode', '-t', 'memory'], stderr=subprocess.DEVNULL).decode()
+        ram_out = subprocess.check_output(['sudo', '-n', 'dmidecode', '-t', 'memory'], stderr=subprocess.DEVNULL, timeout=2).decode()
         # Simple regex to find Size and Speed for each handle
         sizes = re.findall(r'Size: (\d+ [GM]B)', ram_out)
         speeds = re.findall(r'Configured Memory Speed: (\d+ MT/s)', ram_out)
