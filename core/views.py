@@ -128,8 +128,20 @@ def tool_detail(request, tool_name):
     }
 
     if module:
-        # Get module specific context
-        module_context = module.get_context_data(request, tool)
+        # Get module specific context with caching
+        cache_key = f'module_context_{tool.name}_{request.user.id}'
+        # If it's an HTMX request for a specific tab, we might want to bypass or use a different cache
+        is_hx = request.headers.get('HX-Request')
+        
+        module_context = None
+        if not is_hx:
+            module_context = cache.get(cache_key)
+            
+        if module_context is None:
+            module_context = module.get_context_data(request, tool)
+            if not is_hx:
+                cache.set(cache_key, module_context, 30) # Cache for 30 seconds
+        
         context.update(module_context)
         
         # Add dynamic module properties to context
@@ -138,7 +150,7 @@ def tool_detail(request, tool_name):
         context['service_version'] = module.get_service_version() or tool.version
 
         # Handle HTMX requests
-        if request.headers.get('HX-Request'):
+        if is_hx:
             target = request.GET.get('tab')
             if target == 'status':
                 return render(request, 'core/partials/tool_status.html', context)
