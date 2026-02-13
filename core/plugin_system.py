@@ -125,6 +125,9 @@ class ModuleRegistry:
 
     def sync_tools_with_db(self):
         """Ensure all discovered modules have a corresponding Tool record in the DB."""
+        # Always re-discover to catch newly added submodules without restart
+        self.discover_modules()
+        
         if self._synced:
             return
             
