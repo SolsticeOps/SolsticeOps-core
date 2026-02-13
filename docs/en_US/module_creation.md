@@ -67,10 +67,11 @@ def get_service_status(self, tool):
     # Should return 'running', 'stopped', or 'error'
     try:
         from core.utils import run_command
-        status_process = run_command(["systemctl", "is-active", "my-service"])
+        # Use log_errors=False to prevent cluttering logs when service is stopped
+        status_process = run_command(["systemctl", "is-active", "my-service"], log_errors=False)
         return 'running' if status_process.decode().strip() == "active" else 'stopped'
     except:
-        return 'error'
+        return 'stopped' # Default to stopped if command fails
 ```
 
 **Lifecycle Actions:**
@@ -253,9 +254,9 @@ def get_service_status(self, tool):
         container = client.containers.get(tool.config_data.get('container_name'))
         if container:
             return 'running' if container.status == 'running' else 'stopped'
-        return 'error'
+        return 'stopped'
     except:
-        return 'error'
+        return 'stopped'
 
 def service_start(self, tool):
     client = DockerCLI()
