@@ -299,7 +299,7 @@
                                     v{{ tool.module_version }}{% if tool.service_version %} | {{ tool.service_version }}{% endif %}
                                 </span>
                             </div>
-                            <span class="status-dot {% if tool.status == 'installed' %}bg-success{% elif tool.status == 'installing' %}bg-warning status-pulsate{% elif tool.status == 'error' %}bg-danger{% else %}bg-secondary opacity-50{% endif %}"></span>
+                            <span class="status-dot {% if tool.status == 'installed' %}{% if tool.actual_service_status == 'running' %}bg-success{% elif tool.actual_service_status == 'stopped' %}bg-warning{% else %}bg-danger{% endif %}{% elif tool.status == 'installing' %}bg-warning status-pulsate{% elif tool.status == 'error' %}bg-danger{% else %}bg-secondary opacity-50{% endif %}"></span>
                         </a>
                     </li>
                     {% endfor %}

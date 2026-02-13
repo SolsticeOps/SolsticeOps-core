@@ -13,6 +13,7 @@ def tools_nav(request):
         if module:
             tool.module_version = getattr(module, 'version', '1.0.0')
             tool.service_version = module.get_service_version() or tool.version
+            tool.actual_service_status = module.get_service_status(tool) if tool.status == 'installed' else 'stopped'
             tools.append(tool)
             
     return {

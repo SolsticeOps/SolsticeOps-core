@@ -76,7 +76,7 @@
             </div>
         </div>
 
-        {% if resource_tabs and tool.status == 'installed' %}
+        {% if resource_tabs and tool.status == 'installed' and service_status == 'running' %}
         <div class="card shadow-sm border-0">
             <div class="card-header bg-transparent border-0 pt-4 px-4">
                 {% call_method module "get_resource_header_template_name" as resource_header_template %}
