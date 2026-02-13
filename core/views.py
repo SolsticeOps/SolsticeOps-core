@@ -140,7 +140,10 @@ def tool_detail(request, tool_name):
         if module_context is None:
             module_context = module.get_context_data(request, tool)
             if not is_hx:
-                cache.set(cache_key, module_context, 30) # Cache for 30 seconds
+                try:
+                    cache.set(cache_key, module_context, 30) # Cache for 30 seconds
+                except Exception as e:
+                    logger.warning(f"Failed to cache module context for {tool.name}: {e}")
         
         context.update(module_context)
         
