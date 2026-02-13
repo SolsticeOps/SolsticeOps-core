@@ -200,11 +200,20 @@ def add_module(request):
                     # If directory exists, try to initialize it in case it's an uninitialized submodule
                     try:
                         run_command(['git', 'submodule', 'update', '--init', module_path], timeout=300)
+                        
+                        # Install dependencies if requirements.txt exists
+                        req_path = os.path.join(module_path, 'requirements.txt')
+                        if os.path.exists(req_path):
+                            # Use the python from the virtual environment to run pip
+                            venv_pip = os.path.join(settings.BASE_DIR, '.venv', 'bin', 'pip')
+                            if os.path.exists(venv_pip):
+                                run_command([venv_pip, 'install', '-r', req_path], timeout=300)
+                        
                         plugin_registry.discover_modules()
                         plugin_registry.sync_tools_with_db()
                         return redirect('dashboard')
-                    except:
-                        return HttpResponse(f"Module '{module_name}' already exists and could not be initialized", status=400)
+                    except Exception as e:
+                        return HttpResponse(f"Module '{module_name}' already exists and could not be initialized: {str(e)}", status=400)
                 
                 # Use git submodule add
                 try:
