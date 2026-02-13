@@ -19,7 +19,7 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 SERVICE_FILE="/etc/systemd/system/solstice-ops.service"
 
@@ -82,7 +82,7 @@ do_install() {
     # 3. System dependencies
     echo -e "\n${YELLOW}--- Installing System Dependencies ---${NC}"
     apt-get update
-    apt-get install -y python3 python3-pip python3-venv git curl libmagic1
+    apt-get install -y python3 python3-pip python3-venv git curl libmagic1 dmidecode
 
     # 4. Clone repository
     echo -e "\n${YELLOW}--- Cloning Repository ---${NC}"
@@ -100,6 +100,7 @@ do_install() {
     source .venv/bin/activate
     pip install --upgrade pip
     pip install -r requirements.txt
+    pip install whitenoise
 
     # 6. Initialize submodules and install their dependencies
     echo -e "\n${YELLOW}--- Initializing Modules ---${NC}"
@@ -148,6 +149,9 @@ EOF
     echo -e "\n${YELLOW}--- Initializing Database ---${NC}"
     python3 manage.py migrate
 
+    echo -e "\n${YELLOW}--- Collecting Static Files ---${NC}"
+    python3 manage.py collectstatic --noinput
+
     echo -e "\n${YELLOW}--- Creating Admin User ---${NC}"
     python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='$ADMIN_USER').delete(); User.objects.create_superuser('$ADMIN_USER', 'admin@example.com', '$ADMIN_PASS')"
 
@@ -162,7 +166,7 @@ After=network.target
 User=root
 Group=root
 WorkingDirectory=$INSTALL_DIR
-Environment="PATH=$INSTALL_DIR/.venv/bin"
+Environment="PATH=$INSTALL_DIR/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ExecStart=$INSTALL_DIR/.venv/bin/python $INSTALL_DIR/manage.py runserver 0.0.0.0:$PANEL_PORT
 Restart=always
 
@@ -201,6 +205,7 @@ do_update() {
     source .venv/bin/activate
     pip install --upgrade pip
     pip install -r requirements.txt
+    pip install whitenoise
     
     # Update module dependencies
     for mod_dir in modules/*; do
@@ -212,6 +217,7 @@ do_update() {
 
     echo -e "\n${YELLOW}--- Running Migrations ---${NC}"
     python3 manage.py migrate
+    python3 manage.py collectstatic --noinput
 
     echo -e "\n${YELLOW}--- Restarting Service ---${NC}"
     systemctl restart solstice-ops

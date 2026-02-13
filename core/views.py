@@ -9,12 +9,18 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseForbidden, HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from .models import Tool
 from .plugin_system import plugin_registry
 from .utils import run_command
 
 def get_hw_info_sudo():
     """Fetches detailed HW info using sudo dmidecode."""
+    cache_key = 'hw_info_sudo'
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        return cached_data
+
     data = {'ram_slots': [], 'motherboard': 'Unknown'}
     try:
         # Motherboard
@@ -33,6 +39,8 @@ def get_hw_info_sudo():
             data['ram_slots'].append({'slot': i, 'size': size, 'speed': speed})
     except:
         pass
+    
+    cache.set(cache_key, data, 3600) # Cache for 1 hour
     return data
 
 def get_server_stats():
@@ -77,14 +85,22 @@ def get_server_stats():
 @login_required
 def dashboard(request):
     # Hardware Info (cached or static)
-    info = cpuinfo.get_cpu_info()
+    cache_key = 'cpu_info_brand'
+    cpu_brand = cache.get(cache_key)
+    if not cpu_brand:
+        try:
+            info = cpuinfo.get_cpu_info()
+            cpu_brand = info.get('brand_raw', 'Unknown')
+            cache.set(cache_key, cpu_brand, 86400) # Cache for 24 hours
+        except:
+            cpu_brand = "Unknown"
     
     hw_sudo = get_hw_info_sudo()
     context = {
         'server_info': {
             'os': platform.system(),
             'os_release': platform.release(),
-            'cpu_brand': info.get('brand_raw', 'Unknown'),
+            'cpu_brand': cpu_brand,
             'cpu_count': psutil.cpu_count(),
             'cpu_threads': psutil.cpu_count(logical=True),
             'ram_total': round(psutil.virtual_memory().total / (1024**3), 2),

@@ -137,13 +137,25 @@ class ModuleRegistry:
         existing_tools = Tool.objects.filter(name__in=module_ids)
         existing_tool_names = set(existing_tools.values_list('name', flat=True))
         
-        # Check existing tools for "out of the box" status
+        # Check existing tools for "out of the box" status or auto-detection
         for tool in existing_tools:
             module = self.get_module(tool.name)
-            if module and not hasattr(module, 'install') and tool.status == 'not_installed':
-                tool.status = 'installed'
-                tool.save()
-                logger.info(f"Updated Tool {tool.name} to installed (no install method)")
+            if module:
+                # 1. No install method means it's "out of the box"
+                if not hasattr(module, 'install') and tool.status == 'not_installed':
+                    tool.status = 'installed'
+                    tool.save()
+                    logger.info(f"Updated Tool {tool.name} to installed (no install method)")
+                
+                # 2. Auto-detect if already installed on system
+                elif tool.status == 'not_installed':
+                    try:
+                        if module.get_service_version():
+                            tool.status = 'installed'
+                            tool.save()
+                            logger.info(f"Auto-detected {tool.name} as installed on system.")
+                    except:
+                        pass
 
         # Find which modules are missing from DB
         missing_modules = [m for m in self.get_all_modules() if m.module_id not in existing_tool_names]
@@ -156,15 +168,14 @@ class ModuleRegistry:
                 if not hasattr(module, 'install'):
                     status = 'installed'
                     logger.info(f"Module {module.module_id} has no install method, marking as installed.")
-
-                Tool.objects.create(
-                    name=module.module_id,
-                    status=status,
-                    version=getattr(module, 'version', '1.0.0')
-                )
-                logger.info(f"Created Tool record for missing module: {module.module_id}")
-            except Exception as e:
-                logger.debug(f"Could not create Tool record for {module.module_id}: {e}")
+                else:
+                    # Check if already installed on system
+                    try:
+                        if module.get_service_version():
+                            status = 'installed'
+                            logger.info(f"Module {module.module_id} auto-detected as installed on system.")
+                    except:
+                        pass
         
         self._synced = True
 
