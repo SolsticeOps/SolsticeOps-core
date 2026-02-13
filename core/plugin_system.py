@@ -176,6 +176,15 @@ class ModuleRegistry:
                             logger.info(f"Module {module.module_id} auto-detected as installed on system.")
                     except:
                         pass
+
+                Tool.objects.create(
+                    name=module.module_id,
+                    status=status,
+                    version=getattr(module, 'version', '1.0.0')
+                )
+                logger.info(f"Created Tool record for missing module: {module.module_id}")
+            except Exception as e:
+                logger.debug(f"Could not create Tool record for {module.module_id}: {e}")
         
         self._synced = True
 
