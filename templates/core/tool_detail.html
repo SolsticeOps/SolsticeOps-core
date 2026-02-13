@@ -45,9 +45,9 @@
                         <h6 class="fw-bold mb-3">Service Management</h6>
                         <div class="d-flex flex-column gap-2">
                             <div class="d-flex flex-wrap gap-2">
-                                <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"><i class="bi bi-play-fill"></i> Start</button>
-                                <button class="btn btn-outline-warning btn-sm d-flex align-items-center gap-2"><i class="bi bi-pause-fill"></i> Stop</button>
-                                <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"><i class="bi bi-arrow-clockwise"></i> Restart</button>
+                                <a href="{% url 'tool_action' tool.name 'start' %}" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"><i class="bi bi-play-fill"></i> Start</a>
+                                <a href="{% url 'tool_action' tool.name 'stop' %}" class="btn btn-outline-warning btn-sm d-flex align-items-center gap-2"><i class="bi bi-pause-fill"></i> Stop</a>
+                                <a href="{% url 'tool_action' tool.name 'restart' %}" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"><i class="bi bi-arrow-clockwise"></i> Restart</a>
                                 
                                 {% load core_tags %}
                                 {% call_method module "get_logs_url" tool as logs_url %}

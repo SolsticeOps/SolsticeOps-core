@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 from django.views.generic.base import RedirectView
 from django.templatetags.static import static as static_tag
 from core.views import (
-    dashboard, server_stats_partial, tool_detail, install_tool, add_module
+    dashboard, server_stats_partial, tool_detail, install_tool, add_module, tool_action
 )
 from core.plugin_system import plugin_registry
 
@@ -16,6 +16,7 @@ urlpatterns = [
     path('', dashboard, name='dashboard'),
     path('tool/<str:tool_name>/', tool_detail, name='tool_detail'),
     path('tool/<str:tool_name>/install/', install_tool, name='install_tool'),
+    path('tool/<str:tool_name>/<str:action>/', tool_action, name='tool_action'),
     path('module/add/', add_module, name='add_module'),
     path('api/stats/', server_stats_partial, name='server_stats_partial'),
     path('accounts/login/', auth_views.LoginView.as_view(), name='login'),

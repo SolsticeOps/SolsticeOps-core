@@ -156,6 +156,10 @@ def tool_detail(request, tool_name):
                 logger.warning(f"Failed to cache module context for {tool.name}: {e}")
         
         context.update(module_context)
+
+        # Update tool status based on actual service status
+        service_status = module.get_service_status(tool)
+        context['service_status'] = service_status
         
         # Add dynamic module properties to context
         context['resource_tabs'] = module.get_resource_tabs()
@@ -183,6 +187,33 @@ def install_tool(request, tool_name):
     if module and hasattr(module, 'install'):
         module.install(request, tool)
         
+    return redirect('tool_detail', tool_name=tool_name)
+
+@login_required
+def tool_action(request, tool_name, action):
+    tool = get_object_or_404(Tool, name=tool_name)
+    module = plugin_registry.get_module(tool.name)
+    
+    if action not in ['start', 'stop', 'restart']:
+        return HttpResponse("Invalid action", status=400)
+    
+    # Try to execute action via module if it has custom implementation
+    action_method_name = f"service_{action}"
+    if module and hasattr(module, action_method_name):
+        getattr(module, action_method_name)(tool)
+    else:
+        # Default implementation using systemctl
+        try:
+            run_command(['systemctl', action, tool.name])
+        except Exception as e:
+            # If systemctl fails, maybe it's not a systemd service
+            # We could log this or handle differently
+            pass
+            
+    # Clear cache for this module to reflect changes immediately
+    cache_key = f'module_context_{tool.name}_{request.user.id}'
+    cache.delete(cache_key)
+    
     return redirect('tool_detail', tool_name=tool_name)
 
 @login_required

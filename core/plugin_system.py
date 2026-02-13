@@ -76,6 +76,10 @@ class BaseModule(ABC):
         """Return additional context data for the tool detail view."""
         return {}
 
+    def get_service_status(self, tool):
+        """Return the status of the service (e.g., 'running', 'stopped', 'error')."""
+        return 'running'
+
     def handle_hx_request(self, request, tool, target):
         """Handle HTMX requests for this module."""
         return None

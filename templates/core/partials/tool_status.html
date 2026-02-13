@@ -47,6 +47,7 @@
         <a href="{% url 'install_tool' tool.name %}" class="btn btn-danger mt-3">Try Again</a>
     </div>
     {% elif tool.status == 'installed' %}
+    {% if service_status == 'running' %}
     <div class="alert alert-success d-flex align-items-center mb-0 mt-auto">
         <i class="bi bi-check-circle-fill me-3 h4 mb-0"></i>
         <div>
@@ -59,6 +60,22 @@
             is currently installed and operational.
         </div>
     </div>
-    
+    {% elif service_status == 'stopped' %}
+    <div class="alert alert-warning d-flex align-items-center mb-0 mt-auto">
+        <i class="bi bi-pause-circle-fill me-3 h4 mb-0"></i>
+        <div>
+            <strong>Service is stopped.</strong> {{ tool.get_name_display }}
+            is currently installed but not running.
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-danger d-flex align-items-center mb-0 mt-auto">
+        <i class="bi bi-exclamation-octagon-fill me-3 h4 mb-0"></i>
+        <div>
+            <strong>Service error!</strong> {{ tool.get_name_display }}
+            is not responding correctly.
+        </div>
+    </div>
+    {% endif %}
     {% endif %}
 </div>
