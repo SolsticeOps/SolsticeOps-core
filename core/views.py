@@ -60,6 +60,9 @@ def get_server_stats():
     for part in psutil.disk_partitions(all=False):
         if os.name == 'nt' and ('cdrom' in part.opts or part.fstype == ''):
             continue
+        # Filter out loop devices
+        if part.device.startswith('/dev/loop'):
+            continue
         try:
             usage = psutil.disk_usage(part.mountpoint)
             disks.append({
