@@ -57,7 +57,36 @@ def get_context_data(self, request, tool):
     }
 ```
 
-#### 2. Вкладки ресурсов
+#### 2. Статус сервиса и действия
+SolsticeOps предоставляет стандартизированный способ отслеживания состояния сервиса и выполнения действий жизненного цикла (Запуск, Остановка, Перезапуск).
+
+**Отслеживание статуса:**
+Реализуйте `get_service_status`, чтобы возвращать текущее рабочее состояние.
+```python
+def get_service_status(self, tool):
+    # Должен возвращать 'running', 'stopped' или 'error'
+    try:
+        from core.utils import run_command
+        status_process = run_command(["systemctl", "is-active", "my-service"])
+        return 'running' if status_process.decode().strip() == "active" else 'stopped'
+    except:
+        return 'error'
+```
+
+**Действия жизненного цикла:**
+Реализуйте эти методы для обработки нажатий кнопок в интерфейсе. Если они не реализованы, ядро по умолчанию выполняет `systemctl <action> <module_id>`.
+```python
+def service_start(self, tool):
+    run_command(["systemctl", "start", "my-service"])
+
+def service_stop(self, tool):
+    run_command(["systemctl", "stop", "my-service"])
+
+def service_restart(self, tool):
+    run_command(["systemctl", "restart", "my-service"])
+```
+
+#### 3. Вкладки ресурсов
 Определите вкладки, которые появятся на странице деталей. Обычно они загружают контент через HTMX:
 ```python
 def get_resource_tabs(self):

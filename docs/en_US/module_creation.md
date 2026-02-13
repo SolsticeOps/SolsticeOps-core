@@ -57,7 +57,36 @@ def get_context_data(self, request, tool):
     }
 ```
 
-#### 2. Resource Tabs
+#### 2. Service Status and Actions
+SolsticeOps provides a standardized way to track service health and perform lifecycle actions (Start, Stop, Restart).
+
+**Status Tracking:**
+Implement `get_service_status` to return the current operational state.
+```python
+def get_service_status(self, tool):
+    # Should return 'running', 'stopped', or 'error'
+    try:
+        from core.utils import run_command
+        status_process = run_command(["systemctl", "is-active", "my-service"])
+        return 'running' if status_process.decode().strip() == "active" else 'stopped'
+    except:
+        return 'error'
+```
+
+**Lifecycle Actions:**
+Implement these methods to handle button clicks in the UI. If not implemented, the core defaults to `systemctl <action> <module_id>`.
+```python
+def service_start(self, tool):
+    run_command(["systemctl", "start", "my-service"])
+
+def service_stop(self, tool):
+    run_command(["systemctl", "stop", "my-service"])
+
+def service_restart(self, tool):
+    run_command(["systemctl", "restart", "my-service"])
+```
+
+#### 3. Resource Tabs
 Define tabs that appear on the detail page. These usually load content via HTMX:
 ```python
 def get_resource_tabs(self):
