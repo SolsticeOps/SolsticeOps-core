@@ -76,7 +76,7 @@ do_install() {
     echo "3) Jenkins (CI/CD automation)"
     echo "4) Ollama (AI Models)"
     echo "*You can install these and other modules through the interface"
-    read -ei "" -p "Selection: [1 2 3 4]" MODULE_CHOICE
+    read -ei "" -p "Selection [1 2 3 4]: " MODULE_CHOICE
     MODULE_CHOICE=${MODULE_CHOICE:-"1 2 3 4"}
 
     # 3. System dependencies
@@ -199,7 +199,8 @@ do_update() {
 
     echo -e "\n${YELLOW}--- Pulling changes from Git ---${NC}"
     git pull
-    git submodule update --init --recursive
+    # Only update submodules that are already initialized
+    git submodule update --recursive
 
     echo -e "\n${YELLOW}--- Updating Dependencies ---${NC}"
     source .venv/bin/activate
@@ -207,9 +208,9 @@ do_update() {
     pip install -r requirements.txt
     pip install whitenoise
     
-    # Update module dependencies
+    # Update module dependencies only for initialized modules
     for mod_dir in modules/*; do
-        if [[ -d "$mod_dir" && -f "$mod_dir/requirements.txt" ]]; then
+        if [[ -d "$mod_dir" && -f "$mod_dir/requirements.txt" && -f "$mod_dir/__init__.py" ]]; then
             echo "Updating dependencies for module: $(basename "$mod_dir")"
             pip install -r "$mod_dir/requirements.txt"
         fi
