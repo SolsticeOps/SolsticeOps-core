@@ -129,21 +129,28 @@ def tool_detail(request, tool_name):
 
     if module:
         # Get module specific context with caching
-        cache_key = f'module_context_{tool.name}_{request.user.id}'
-        # If it's an HTMX request for a specific tab, we might want to bypass or use a different cache
+        # Include tab in cache key for HTMX requests
+        target = request.GET.get('tab')
         is_hx = request.headers.get('HX-Request')
         
-        module_context = None
-        if not is_hx:
-            module_context = cache.get(cache_key)
+        cache_key = f'module_context_{tool.name}_{request.user.id}'
+        if is_hx and target:
+            cache_key += f'_{target}'
+            # For namespace-specific requests
+            namespace = request.GET.get('namespace')
+            if namespace:
+                cache_key += f'_{namespace}'
+        
+        module_context = cache.get(cache_key)
             
         if module_context is None:
             module_context = module.get_context_data(request, tool)
-            if not is_hx:
-                try:
-                    cache.set(cache_key, module_context, 30) # Cache for 30 seconds
-                except Exception as e:
-                    logger.warning(f"Failed to cache module context for {tool.name}: {e}")
+            try:
+                # Cache for 30s for page loads, 5s for HTMX refreshes
+                ttl = 5 if is_hx else 30
+                cache.set(cache_key, module_context, ttl)
+            except Exception as e:
+                logger.warning(f"Failed to cache module context for {tool.name}: {e}")
         
         context.update(module_context)
         
@@ -154,7 +161,6 @@ def tool_detail(request, tool_name):
 
         # Handle HTMX requests
         if is_hx:
-            target = request.GET.get('tab')
             if target == 'status':
                 return render(request, 'core/partials/tool_status.html', context)
             
