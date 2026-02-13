@@ -88,7 +88,7 @@ do_install() {
     echo -e "\n${YELLOW}--- Cloning Repository ---${NC}"
     if [[ -d "$INSTALL_DIR" ]]; then
         echo -e "${YELLOW}Warning: Directory $INSTALL_DIR already exists. Backing up to ${INSTALL_DIR}.bak${NC}"
-        mv "$INSTALL_DIR" "${INSTALL_DIR}.bak"
+        mv -f "$INSTALL_DIR" "${INSTALL_DIR}.bak"
     fi
 
     git clone https://github.com/SolsticeOps/SolsticeOps-core.git "$INSTALL_DIR"
@@ -100,7 +100,6 @@ do_install() {
     source .venv/bin/activate
     pip install --upgrade pip
     pip install -r requirements.txt
-    pip install whitenoise
 
     # 6. Initialize submodules and install their dependencies
     echo -e "\n${YELLOW}--- Initializing Modules ---${NC}"
@@ -206,13 +205,15 @@ do_update() {
     source .venv/bin/activate
     pip install --upgrade pip
     pip install -r requirements.txt
-    pip install whitenoise
     
     # Update module dependencies only for initialized modules
     for mod_dir in modules/*; do
-        if [[ -d "$mod_dir" && -f "$mod_dir/requirements.txt" && -f "$mod_dir/__init__.py" ]]; then
-            echo "Updating dependencies for module: $(basename "$mod_dir")"
-            pip install -r "$mod_dir/requirements.txt"
+        if [[ -d "$mod_dir" && -f "$mod_dir/.git" && -f "$mod_dir/__init__.py" ]]; then
+            echo "Updating module: $(basename "$mod_dir")"
+            (cd "$mod_dir" && git pull origin main || git pull)
+            if [[ -f "$mod_dir/requirements.txt" ]]; then
+                pip install -r "$mod_dir/requirements.txt"
+            fi
         fi
     done
 
