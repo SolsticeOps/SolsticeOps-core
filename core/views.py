@@ -197,10 +197,24 @@ def add_module(request):
                 module_path = os.path.join('modules', module_name)
                 
                 if os.path.exists(module_path):
-                    return HttpResponse(f"Module '{module_name}' already exists", status=400)
+                    # If directory exists, try to initialize it in case it's an uninitialized submodule
+                    try:
+                        run_command(['git', 'submodule', 'update', '--init', module_path], timeout=300)
+                        plugin_registry.discover_modules()
+                        plugin_registry.sync_tools_with_db()
+                        return redirect('dashboard')
+                    except:
+                        return HttpResponse(f"Module '{module_name}' already exists and could not be initialized", status=400)
                 
                 # Use git submodule add
-                run_command(['git', 'submodule', 'add', repo_url, module_path], timeout=300)
+                try:
+                    run_command(['git', 'submodule', 'add', repo_url, module_path], timeout=300)
+                except Exception as e:
+                    # If 'add' fails because it's already in .gitmodules but not on disk
+                    if "already exists in the index" in str(e):
+                        run_command(['git', 'submodule', 'update', '--init', module_path], timeout=300)
+                    else:
+                        raise e
                 
                 # Trigger module discovery
                 plugin_registry.discover_modules()
