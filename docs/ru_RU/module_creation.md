@@ -183,6 +183,35 @@ input_data = "n\np\n\n\n+1G\nw\n"
 run_command(['fdisk', '/dev/sdb'], input_data=input_data)
 ```
 
+### Интеграция с Docker
+
+Если ваш модуль взаимодействует с Docker, вы можете использовать встроенную обертку `DockerCLI`, предоставляемую ядром. Она использует команды на основе `sudo` для управления контейнерами, образами, томами и сетями.
+
+```python
+from core.docker_cli_wrapper import DockerCLI
+
+client = DockerCLI()
+
+# Список контейнеров
+containers = client.containers.list(all=True)
+
+# Запуск контейнера
+container = client.containers.get('my-container')
+if container:
+    container.start()
+
+# Загрузка образа
+client.images.pull('nginx', tag='latest')
+
+# Запуск нового контейнера
+client.containers.run(
+    'nginx:latest',
+    name='my-nginx',
+    ports={'80/tcp': '8080'},
+    detach=True
+)
+```
+
 ## Управление зависимостями
 
 Каждый модуль **должен** иметь свой собственный файл `requirements.txt`.

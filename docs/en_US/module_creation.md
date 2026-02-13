@@ -183,6 +183,35 @@ input_data = "n\np\n\n\n+1G\nw\n"
 run_command(['fdisk', '/dev/sdb'], input_data=input_data)
 ```
 
+### Docker Integration
+
+If your module interacts with Docker, you can use the built-in `DockerCLI` wrapper provided by the core. It uses `sudo`-based commands to manage containers, images, volumes, and networks.
+
+```python
+from core.docker_cli_wrapper import DockerCLI
+
+client = DockerCLI()
+
+# List containers
+containers = client.containers.list(all=True)
+
+# Start a container
+container = client.containers.get('my-container')
+if container:
+    container.start()
+
+# Pull an image
+client.images.pull('nginx', tag='latest')
+
+# Run a new container
+client.containers.run(
+    'nginx:latest',
+    name='my-nginx',
+    ports={'80/tcp': '8080'},
+    detach=True
+)
+```
+
 ## Dependency Management
 
 Each module **must** have its own `requirements.txt`. 
