@@ -241,6 +241,41 @@ client.containers.run(
 )
 ```
 
+#### Статус и действия для Docker-контейнеров
+Если ваш модуль основан на Docker-контейнере, вам следует переопределить методы сервиса для использования `DockerCLI` вместо `systemctl`.
+
+```python
+from core.docker_cli_wrapper import DockerCLI
+
+def get_service_status(self, tool):
+    try:
+        client = DockerCLI()
+        container = client.containers.get(tool.config_data.get('container_name'))
+        if container:
+            return 'running' if container.status == 'running' else 'stopped'
+        return 'error'
+    except:
+        return 'error'
+
+def service_start(self, tool):
+    client = DockerCLI()
+    container = client.containers.get(tool.config_data.get('container_name'))
+    if container:
+        container.start()
+
+def service_stop(self, tool):
+    client = DockerCLI()
+    container = client.containers.get(tool.config_data.get('container_name'))
+    if container:
+        container.stop()
+
+def service_restart(self, tool):
+    client = DockerCLI()
+    container = client.containers.get(tool.config_data.get('container_name'))
+    if container:
+        container.restart()
+```
+
 ## Управление зависимостями
 
 Каждый модуль **должен** иметь свой собственный файл `requirements.txt`.

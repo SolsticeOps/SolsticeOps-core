@@ -241,6 +241,41 @@ client.containers.run(
 )
 ```
 
+#### Docker-based Service Status and Actions
+When your module is based on a Docker container, you should override the service methods to use the `DockerCLI` instead of `systemctl`.
+
+```python
+from core.docker_cli_wrapper import DockerCLI
+
+def get_service_status(self, tool):
+    try:
+        client = DockerCLI()
+        container = client.containers.get(tool.config_data.get('container_name'))
+        if container:
+            return 'running' if container.status == 'running' else 'stopped'
+        return 'error'
+    except:
+        return 'error'
+
+def service_start(self, tool):
+    client = DockerCLI()
+    container = client.containers.get(tool.config_data.get('container_name'))
+    if container:
+        container.start()
+
+def service_stop(self, tool):
+    client = DockerCLI()
+    container = client.containers.get(tool.config_data.get('container_name'))
+    if container:
+        container.stop()
+
+def service_restart(self, tool):
+    client = DockerCLI()
+    container = client.containers.get(tool.config_data.get('container_name'))
+    if container:
+        container.restart()
+```
+
 ## Dependency Management
 
 Each module **must** have its own `requirements.txt`. 
