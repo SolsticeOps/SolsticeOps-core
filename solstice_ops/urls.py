@@ -3,6 +3,8 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic.base import RedirectView
+from django.templatetags.static import static as static_tag
 from core.views import (
     dashboard, server_stats_partial, tool_detail, install_tool, add_module
 )
@@ -10,6 +12,7 @@ from core.plugin_system import plugin_registry
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('favicon.ico', RedirectView.as_view(url=static_tag('icon_logo.svg'), permanent=True)),
     path('', dashboard, name='dashboard'),
     path('tool/<str:tool_name>/', tool_detail, name='tool_detail'),
     path('tool/<str:tool_name>/install/', install_tool, name='install_tool'),
