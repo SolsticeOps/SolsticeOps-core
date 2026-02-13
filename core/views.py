@@ -202,9 +202,9 @@ def add_module(request):
                 # Use git submodule add
                 run_command(['git', 'submodule', 'add', repo_url, module_path], timeout=300)
                 
-                # Trigger module discovery (this usually happens on server restart, 
-                # but we can try to trigger it or just tell the user to restart)
-                # For now, we assume the user will restart or the watcher will catch it.
+                # Trigger module discovery
+                plugin_registry.discover_modules()
+                plugin_registry.sync_tools_with_db()
                 
                 return redirect('dashboard')
             except Exception as e:
