@@ -5,14 +5,18 @@ import os
 import subprocess
 import re
 import threading
+import logging
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseForbidden, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
+from django.conf import settings
 from .models import Tool
 from .plugin_system import plugin_registry
 from .utils import run_command
+
+logger = logging.getLogger(__name__)
 
 def get_hw_info_sudo():
     """Fetches detailed HW info using sudo dmidecode."""

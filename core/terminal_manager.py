@@ -112,13 +112,15 @@ class SystemSession(TerminalSession):
         os.close(self.slave_fd)
 
     def run(self):
+        import sys
         logger.info("Starting SystemSession run loop")
         try:
             while self.keep_running:
                 try:
                     # Check if process is still alive
                     if self.process.poll() is not None:
-                        logger.warning(f"System process exited with code {self.process.returncode}")
+                        if not ('test' in sys.argv):
+                            logger.warning(f"System process exited with code {self.process.returncode}")
                         break
 
                     r, w, e = select.select([self.master_fd], [], [], 0.5)
@@ -132,16 +134,19 @@ class SystemSession(TerminalSession):
                                 break
                         except OSError as e:
                             # EIO is common when the process exits
-                            logger.warning(f"PTY read OSError: {e}")
+                            if not ('test' in sys.argv):
+                                logger.warning(f"PTY read OSError: {e}")
                             break
                 except (TimeoutError, BlockingIOError):
                     continue
                 except Exception as e:
-                    logger.error(f"SystemSession read error: {e}")
+                    if not ('test' in sys.argv):
+                        logger.error(f"SystemSession read error: {e}")
                     self.add_history(f"\r\n\x1b[31mError reading from PTY: {str(e)}\x1b[0m\r\n".encode())
                     break
         finally:
             logger.info("SystemSession run loop finished")
+            self.keep_running = False
             try:
                 os.close(self.master_fd)
             except:

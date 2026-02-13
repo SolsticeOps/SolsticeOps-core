@@ -9,11 +9,9 @@ class DockerObject:
         self.attrs = attrs
 
     def __getattr__(self, item):
-        if item == 'attrs':
-            raise AttributeError(item)
-
         try:
-            attrs = self.attrs
+            # Avoid recursion if self.attrs is missing during init or something
+            attrs = object.__getattribute__(self, 'attrs')
         except AttributeError:
             raise AttributeError(item)
 
@@ -24,7 +22,11 @@ class DockerObject:
             # Names in inspect usually start with /
             name = attrs.get('Name', '')
             return name[1:] if name.startswith('/') else name
-        return attrs.get(item)
+        
+        if item in attrs:
+            return attrs[item]
+            
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
 class Container(DockerObject):
     @property
@@ -135,6 +137,7 @@ class Manager:
             return False
         try:
             cmd = ['docker', 'inspect', '--format', '{{.Id}}', obj_id]
+            run_command(cmd)
             return True
         except:
             return False

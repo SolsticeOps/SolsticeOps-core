@@ -20,9 +20,11 @@ def to_opacity(value):
 @register.filter
 def split_env(value):
     """Splits 'KEY=VALUE' string into (KEY, VALUE) tuple."""
-    if '=' in value:
+    if value and isinstance(value, str) and '=' in value:
         return value.split('=', 1)
-    return value, ''
+    if not value:
+        return '', ''
+    return str(value), ''
 
 @register.filter
 def split_at_colon_last(value):
