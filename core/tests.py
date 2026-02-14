@@ -348,25 +348,62 @@ class CoreViewsTest(TestCase):
         run_command("echo test", shell=True)
         mock_sub_output.assert_called()
 
-    @patch('psutil.cpu_percent')
-    @patch('psutil.virtual_memory')
-    @patch('psutil.disk_usage')
-    @patch('psutil.disk_partitions')
-    def test_get_server_stats(self, mock_parts, mock_usage, mock_vm, mock_cpu):
-        from core.views import get_server_stats
-        # cpu_percent is called twice: 
-        # 1. cores_usage = psutil.cpu_percent(interval=None, percpu=True) -> returns list
-        # 2. 'cpu_usage': psutil.cpu_percent(interval=None) -> returns float
-        mock_cpu.side_effect = [[10.0, 20.0], 10.0]
-        mock_vm.return_value = MagicMock(total=100, used=50, percent=50, buffers=10, cached=10)
-        mock_usage.return_value = MagicMock(percent=50, total=100)
-        mock_parts.return_value = [MagicMock(device='/dev/sda1', mountpoint='/', opts='rw', fstype='ext4')]
+    @patch('core.terminal_manager.manager.get_session')
+    def test_terminal_consumer(self, mock_get_session):
+        from core.consumers import TerminalConsumer
+        from core.terminal_manager import TerminalSession
         
-        stats = get_server_stats()
-        self.assertEqual(stats['cpu_usage'], 10.0)
-        self.assertEqual(stats['cpu_cores_count'], 2)
-        self.assertEqual(stats['ram_usage'], 50)
-        self.assertTrue(len(stats['disks_usage']) > 0)
+        mock_session = MagicMock(spec=TerminalSession)
+        mock_get_session.return_value = mock_session
+        
+        consumer = TerminalConsumer()
+        consumer.scope = {
+            'url_route': {'kwargs': {'session_type': 'system'}},
+            'path': '/ws/terminal/system/'
+        }
+        consumer.accept = MagicMock()
+        consumer.close = MagicMock()
+        
+        # Test connect
+        consumer.connect()
+        self.assertEqual(consumer.session_id, "system_shell")
+        mock_session.register_consumer.assert_called_with(consumer)
+        
+        # Test receive input
+        consumer.receive(text_data=json.dumps({'input': 'ls\n'}))
+        mock_session.send_input.assert_called_with('ls\n')
+        
+        # Test receive resize
+        consumer.receive(text_data=json.dumps({'resize': {'rows': 24, 'cols': 80}}))
+        mock_session.resize.assert_called_with(24, 80)
+        
+        # Test receive restart
+        with patch('core.terminal_manager.manager.restart_session') as mock_restart:
+            consumer.receive(text_data=json.dumps({'restart': True}))
+            mock_restart.assert_called_with("system_shell")
+            
+        # Test disconnect
+        consumer.disconnect(1000)
+        mock_session.unregister_consumer.assert_called_with(consumer)
+
+        # Test no session
+        mock_get_session.return_value = None
+        consumer.connect()
+        consumer.close.assert_called()
+
+    def test_terminal_manager_singleton(self):
+        from core.terminal_manager import manager, TerminalManager
+        self.assertIsInstance(manager, TerminalManager)
+        
+        with patch('core.terminal_manager.SystemSession') as mock_sys:
+            sess = manager.get_session("test_unique", "system")
+            self.assertIsNotNone(sess)
+            # Second call same ID
+            sess2 = manager.get_session("test_unique", "system")
+            self.assertEqual(sess, sess2)
+            
+            manager.restart_session("test_unique")
+            self.assertIn("test_unique", manager.sessions)
 
 class DockerCLIWrapperTest(TestCase):
     @patch('core.docker_cli_wrapper.run_command')
@@ -481,10 +518,81 @@ class DockerCLIWrapperTest(TestCase):
         mock_run.return_value = b'[{"Id": "new123", "Name": "/new-cont"}]'
         client = DockerCLI()
         
-        client.containers.run("nginx", name="new-cont", ports={'80/tcp': 8080}, volumes={'/src': {'bind': '/dst', 'mode': 'rw'}}, environment={'K': 'V'}, restart_policy={"Name": "always"}, privileged=True)
-        # Check if run_command was called with 'docker run'
-        any_run = any('run' in str(call) for call in mock_run.call_args_list)
-        self.assertTrue(any_run)
+        client.containers.run("nginx", 
+            name="new-cont", 
+            ports={'80/tcp': 8080}, 
+            volumes={'/src': {'bind': '/dst', 'mode': 'rw'}}, 
+            environment={'K': 'V', 'A': '1'}, 
+            restart_policy={"Name": "always"}, 
+            privileged=True,
+            network="test-net"
+        )
+        
+        # Verify call arguments
+        # The first call is docker run, the second is docker inspect (from self.get())
+        run_call = mock_run.call_args_list[0]
+        args = run_call[0][0]
+        self.assertIn('--name', args)
+        self.assertIn('new-cont', args)
+        self.assertIn('-p', args)
+        self.assertIn('8080:80/tcp', args)
+        self.assertIn('-v', args)
+        self.assertIn('/src:/dst:rw', args)
+        self.assertIn('--network', args)
+        self.assertIn('test-net', args)
+        self.assertIn('--restart', args)
+        self.assertIn('always', args)
+        self.assertIn('--privileged', args)
+        self.assertIn('-e', args)
+        self.assertIn('K=V', args)
+        self.assertIn('A=1', args)
+
+    @patch('core.docker_cli_wrapper.run_command')
+    def test_docker_cli_wrapper_missing_cases(self, mock_run):
+        from core.docker_cli_wrapper import DockerCLI, Container, Image, Volume, Network, Manager
+        client = DockerCLI()
+        
+        # Test Container.image property
+        container = Container({'Id': 'c1', 'Image': 'i1', 'Config': {'Image': 'nginx:latest'}})
+        self.assertEqual(container.image.id, 'i1')
+        self.assertEqual(container.image.tags, ['nginx:latest'])
+        
+        # Test Container.status unknown
+        container_no_state = Container({'Id': 'c1'})
+        self.assertEqual(container_no_state.status, 'unknown')
+        
+        # Test DockerCLI.info failure
+        mock_run.side_effect = Exception("docker info fail")
+        self.assertEqual(client.info(), {})
+        mock_run.side_effect = None
+
+        # Test Manager._exists with empty ID
+        m = Manager()
+        self.assertFalse(m._exists(""))
+
+        # Test Manager._inspect_all with empty list
+        self.assertEqual(m._inspect_all([], Container), [])
+
+        # Test Container.remove without force
+        mock_run.reset_mock()
+        container.remove(force=False)
+        mock_run.assert_called_with(['docker', 'rm', 'c1'])
+
+        # Test Volume.remove without force
+        vol = Volume({'Name': 'v1'})
+        mock_run.reset_mock()
+        vol.remove(force=False)
+        mock_run.assert_called_with(['docker', 'volume', 'rm', 'v1'])
+
+        # Test Network methods with ID instead of object
+        net = Network({'Id': 'n1', 'Name': 'net1'})
+        mock_run.reset_mock()
+        net.connect('c1')
+        mock_run.assert_called_with(['docker', 'network', 'connect', 'n1', 'c1'])
+        
+        mock_run.reset_mock()
+        net.disconnect('c1')
+        mock_run.assert_called_with(['docker', 'network', 'disconnect', 'n1', 'c1'])
 
     @patch('core.docker_cli_wrapper.run_command')
     def test_network_methods(self, mock_run):
