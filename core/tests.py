@@ -9,7 +9,7 @@ from django.core.cache import cache
 from core.models import Tool
 from core.plugin_system import plugin_registry, BaseModule
 from core.utils import run_command
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open
 
 User = get_user_model()
 
@@ -908,3 +908,73 @@ class RoutingTest(TestCase):
     def test_websocket_urlpatterns(self):
         from core.routing import websocket_urlpatterns
         self.assertTrue(len(websocket_urlpatterns) > 0)
+
+class SetupDBTest(TestCase):
+    @patch('builtins.input')
+    @patch('builtins.print')
+    @patch('builtins.open', new_callable=mock_open, read_data="")
+    @patch('os.path.exists')
+    def test_setup_sqlite(self, mock_exists, mock_file, mock_print, mock_input):
+        from setup_db import setup
+        mock_input.side_effect = ['1', 'sudo_pass']
+        mock_exists.return_value = False
+        
+        setup()
+        
+        mock_file.assert_called_with(".env", "w")
+        handle = mock_file()
+        written = "".join([call.args[0] for call in handle.write.call_args_list])
+        self.assertIn("DATABASE_URL=sqlite:///db.sqlite3", written)
+        self.assertIn("SUDO_PASSWORD=sudo_pass", written)
+
+    @patch('builtins.input')
+    @patch('builtins.print')
+    @patch('builtins.open', new_callable=mock_open, read_data="EXISTING=val\nDATABASE_URL=old\nDEBUG=False\nCSRF_TRUSTED_ORIGINS=old\nSUDO_PASSWORD=old\n")
+    @patch('os.path.exists')
+    def test_setup_mysql(self, mock_exists, mock_file, mock_print, mock_input):
+        from setup_db import setup
+        # Choice 2, user, pass, host, port, dbname, sudo_pass
+        mock_input.side_effect = ['2', 'user', 'pass', 'host', '3306', 'dbname', 'sudo_pass']
+        mock_exists.return_value = True
+        
+        setup()
+        
+        handle = mock_file()
+        written = "".join([call.args[0] for call in handle.write.call_args_list])
+        self.assertIn("DATABASE_URL=mysql+mysqlconnector://user:pass@host:3306/dbname", written)
+        self.assertIn("EXISTING=val", written)
+        self.assertIn("DEBUG=True", written)
+
+    @patch('builtins.input')
+    @patch('builtins.print')
+    @patch('builtins.open', new_callable=mock_open, read_data="")
+    @patch('os.path.exists')
+    def test_setup_postgres(self, mock_exists, mock_file, mock_print, mock_input):
+        from setup_db import setup
+        # Choice 3, user, pass, host, port, dbname, sudo_pass
+        mock_input.side_effect = ['3', 'user', 'pass', 'host', '5432', 'dbname', 'sudo_pass']
+        mock_exists.return_value = False
+        
+        setup()
+        
+        handle = mock_file()
+        written = "".join([call.args[0] for call in handle.write.call_args_list])
+        self.assertIn("DATABASE_URL=postgres://user:pass@host:5432/dbname", written)
+
+    @patch('builtins.input')
+    @patch('builtins.print')
+    def test_setup_invalid(self, mock_print, mock_input):
+        from setup_db import setup
+        mock_input.side_effect = ['9']
+        with self.assertRaises(SystemExit) as cm:
+            setup()
+        self.assertEqual(cm.exception.code, 1)
+
+class DeploymentTest(TestCase):
+    def test_asgi_application(self):
+        from solstice_ops.asgi import application
+        self.assertIsNotNone(application)
+
+    def test_wsgi_application(self):
+        from solstice_ops.wsgi import application
+        self.assertIsNotNone(application)
