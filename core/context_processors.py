@@ -1,9 +1,16 @@
 from .models import Tool
 from .plugin_system import plugin_registry
+import subprocess
 
 def tools_nav(request):
+    # Core version from git tag
+    try:
+        core_version = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0']).decode().strip()
+    except:
+        core_version = 'v0.0.0'
+
     if not request.user.is_authenticated:
-        return {}
+        return {'core_version': core_version}
         
     plugin_registry.sync_tools_with_db()
     all_tools = Tool.objects.all()
@@ -18,5 +25,6 @@ def tools_nav(request):
             
     return {
         'tools_nav': tools,
-        'plugin_registry': plugin_registry
+        'plugin_registry': plugin_registry,
+        'core_version': core_version
     }
