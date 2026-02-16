@@ -10,3 +10,6 @@
 [submodule "modules/k8s"]
 	path = modules/k8s
 	url = https://github.com/SolsticeOps/SolsticeOps-k8s.git
+[submodule "modules/minio"]
+	path = modules/minio
+	url = https://github.com/SolsticeOps/SolsticeOps-minio.git

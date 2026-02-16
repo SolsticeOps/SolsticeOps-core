@@ -59,3 +59,4 @@ SolsticeOps использует Git-субмодули для своих мод
 - [Kubernetes](https://github.com/SolsticeOps/SolsticeOps-k8s)
 - [Jenkins](https://github.com/SolsticeOps/SolsticeOps-jenkins)
 - [Ollama](https://github.com/SolsticeOps/SolsticeOps-ollama)
+- [MinIO](https://github.com/SolsticeOps/SolsticeOps-minio)

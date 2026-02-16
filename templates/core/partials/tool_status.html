@@ -31,7 +31,17 @@
         </div>
         <h4 class="text-warning-emphasis fw-bold">Installing {{ tool.get_name_display }}...</h4>
         <p class="fw-bold mb-1 text-dark-emphasis">Current Stage: <span class="text-warning-emphasis">{{ tool.current_stage }}</span></p>
-        <p class="text-muted small mb-0">Please wait, the page will update automatically when the stage changes.</p>
+        
+        {% if tool.config_data.install_progress %}
+        <div class="progress mt-3 mb-2 mx-auto" style="height: 10px; max-width: 400px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                 style="width: {{ tool.config_data.install_progress }}%;" 
+                 aria-valuenow="{{ tool.config_data.install_progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <p class="text-muted small mb-0">{{ tool.config_data.install_progress }}% completed</p>
+        {% endif %}
+
+        <p class="text-muted small mb-0 mt-2">Please wait, the page will update automatically when the stage changes.</p>
     </div>
     {% elif tool.status == 'error' %}
     <div class="alert alert-danger py-4 text-center">
