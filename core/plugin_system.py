@@ -117,6 +117,9 @@ class ModuleRegistry:
     def discover_modules(self):
         """Discover modules in the 'modules' directory."""
         import sys
+        import importlib
+        importlib.invalidate_caches()
+        
         modules_dir = os.path.join(settings.BASE_DIR, 'modules')
         if not os.path.exists(modules_dir):
             os.makedirs(modules_dir)
@@ -137,12 +140,12 @@ class ModuleRegistry:
                     else:
                         logger.error(f"Failed to load module {item}: {e}")
 
-    def sync_tools_with_db(self):
+    def sync_tools_with_db(self, force=False):
         """Ensure all discovered modules have a corresponding Tool record in the DB."""
         # Always re-discover to catch newly added submodules without restart
         self.discover_modules()
         
-        if self._synced:
+        if self._synced and not force:
             return
             
         from .models import Tool

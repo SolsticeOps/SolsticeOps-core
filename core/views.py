@@ -18,6 +18,27 @@ from .utils import run_command
 
 logger = logging.getLogger(__name__)
 
+def _trigger_server_restart():
+    """Helper to trigger a server reload/restart after adding a module."""
+    try:
+        # 1. Touch settings.py to trigger runserver/gunicorn reload if supported
+        settings_file = os.path.join(settings.BASE_DIR, 'solstice_ops', 'settings.py')
+        os.utime(settings_file, None)
+        
+        # 2. Try to restart via systemctl if running as a service
+        # We do this in a separate thread to allow the current request to complete
+        def restart_service():
+            import time
+            time.sleep(1) # Give some time for the redirect to be sent
+            try:
+                subprocess.run(['systemctl', 'restart', 'solstice-ops'], check=False)
+            except:
+                pass
+        
+        threading.Thread(target=restart_service).start()
+    except Exception as e:
+        logger.error(f"Error triggering restart: {e}")
+
 def get_hw_info_sudo():
     """Fetches detailed HW info using sudo dmidecode."""
     cache_key = 'hw_info_sudo'
@@ -248,7 +269,9 @@ def add_module(request):
                                 run_command([venv_pip, 'install', '-r', req_path], timeout=300)
                         
                         plugin_registry.discover_modules()
-                        plugin_registry.sync_tools_with_db()
+                        plugin_registry.sync_tools_with_db(force=True)
+                        _trigger_server_restart()
+                        
                         return redirect('dashboard')
                     except Exception as e:
                         return HttpResponse(f"Module '{module_name}' already exists and could not be initialized: {str(e)}", status=400)
@@ -265,7 +288,8 @@ def add_module(request):
                 
                 # Trigger module discovery
                 plugin_registry.discover_modules()
-                plugin_registry.sync_tools_with_db()
+                plugin_registry.sync_tools_with_db(force=True)
+                _trigger_server_restart()
                 
                 return redirect('dashboard')
             except Exception as e:
