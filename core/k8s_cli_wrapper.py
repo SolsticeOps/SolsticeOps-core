@@ -35,17 +35,21 @@ class K8sObject:
         except AttributeError:
             raise AttributeError(item)
 
+        # Special mappings for common fields
         if item == 'name':
-            return attrs.get('metadata', {}).get('name')
+            return attrs.get('name') or attrs.get('metadata', {}).get('name')
         if item == 'namespace':
-            return attrs.get('metadata', {}).get('namespace')
+            return attrs.get('namespace') or attrs.get('metadata', {}).get('namespace')
         if item == 'uid':
-            return attrs.get('metadata', {}).get('uid')
+            return attrs.get('uid') or attrs.get('metadata', {}).get('uid')
         if item == 'creation_timestamp':
-            ts = attrs.get('metadata', {}).get('creationTimestamp')
+            ts = attrs.get('creationTimestamp') or attrs.get('metadata', {}).get('creationTimestamp')
             if ts:
                 from django.utils.dateparse import parse_datetime
-                return parse_datetime(ts)
+                dt = parse_datetime(ts)
+                if dt: return dt
+        if item == 'replicas':
+            return attrs.get('replicas') or attrs.get('spec', {}).get('replicas')
 
         val = None
         if item in attrs:
@@ -56,6 +60,12 @@ class K8sObject:
                 val = attrs[camel_item]
 
         if val is not None:
+            # Handle timestamps
+            if isinstance(val, str) and (item.endswith('_timestamp') or item.endswith('Timestamp') or item == 'creationTimestamp'):
+                from django.utils.dateparse import parse_datetime
+                dt = parse_datetime(val)
+                if dt: return dt
+            
             if isinstance(val, dict):
                 return K8sObject(val)
             if isinstance(val, list):
@@ -76,10 +86,6 @@ class K8sObject:
             raise KeyError(key)
 
 class Pod(K8sObject):
-    @property
-    def status(self):
-        return self.attrs.get('status', {}).get('phase', 'unknown')
-
     def logs(self, tail=None, timestamps=False):
         cmd = ['kubectl', 'logs', self.name]
         if self.namespace:
@@ -96,9 +102,7 @@ class Pod(K8sObject):
         return run_command(cmd, env=env)
 
 class Deployment(K8sObject):
-    @property
-    def replicas(self):
-        return self.attrs.get('spec', {}).get('replicas', 0)
+    pass
 
 class Service(K8sObject):
     pass
@@ -135,7 +139,7 @@ class Manager:
             cmd.extend(['-n', namespace])
         
         try:
-            output = run_command(cmd, env=self._get_env())
+            output = run_command(cmd, env=self._get_env(), timeout=10)
             data = json.loads(output)
             return [self.cls(item) for item in data.get('items', [])]
         except:
@@ -146,7 +150,7 @@ class Manager:
         if namespace:
             cmd.extend(['-n', namespace])
         try:
-            output = run_command(cmd, env=self._get_env(), log_errors=False)
+            output = run_command(cmd, env=self._get_env(), log_errors=False, timeout=10)
             if output:
                 return self.cls(json.loads(output))
         except:
@@ -215,7 +219,7 @@ class K8sCLI:
             kconfig = get_kubeconfig()
             if kconfig:
                 env['KUBECONFIG'] = kconfig
-            output = run_command(['kubectl', 'version', '-o', 'json'], env=env)
+            output = run_command(['kubectl', 'version', '-o', 'json'], env=env, timeout=5)
             return json.loads(output)
         except:
             return {}
@@ -226,7 +230,7 @@ class K8sCLI:
             kconfig = get_kubeconfig()
             if kconfig:
                 env['KUBECONFIG'] = kconfig
-            output = run_command(['kubectl', 'config', 'current-context'], env=env)
+            output = run_command(['kubectl', 'config', 'current-context'], env=env, timeout=5)
             return output.decode().strip()
         except:
             return 'N/A'
@@ -237,8 +241,8 @@ class K8sCLI:
             kconfig = get_kubeconfig()
             if kconfig:
                 env['KUBECONFIG'] = kconfig
-            output = run_command(['kubectl', 'get', 'namespaces', '-o', 'json'], env=env)
+            output = run_command(['kubectl', 'get', 'namespaces', '-o', 'json'], env=env, timeout=5)
             data = json.loads(output)
-            return [item.get('metadata', {}).get('name') for item in data.get('items', [])]
+            return [K8sObject(item) for item in data.get('items', [])]
         except:
             return []

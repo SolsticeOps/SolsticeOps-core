@@ -257,6 +257,14 @@ pods = k8s.pods.list(all_namespaces=True)
 # List deployments in a specific namespace
 deployments = k8s.deployments.list(namespace='default')
 
+# Accessing resource data:
+# The wrapper automatically handles nested attributes, camelCase mapping, and datetime parsing.
+for pod in k8s.pods.list():
+    print(f"Pod: {pod.name}") # Shortcut for metadata.name
+    print(f"Status: {pod.status.phase}") # Nested access
+    print(f"IP: {pod.status.pod_ip}") # Automatic mapping from podIP
+    print(f"Created: {pod.creation_timestamp}") # Parsed as datetime
+
 # Scale a deployment
 k8s.deployments.scale('my-deployment', replicas=3, namespace='default')
 

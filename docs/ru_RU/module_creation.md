@@ -257,6 +257,14 @@ pods = k8s.pods.list(all_namespaces=True)
 # Список развертываний в конкретном пространстве имен
 deployments = k8s.deployments.list(namespace='default')
 
+# Доступ к данным ресурсов:
+# Обертка автоматически обрабатывает вложенные атрибуты, преобразование camelCase и парсинг дат.
+for pod in k8s.pods.list():
+    print(f"Pod: {pod.name}") # Ярлык для metadata.name
+    print(f"Status: {pod.status.phase}") # Вложенный доступ
+    print(f"IP: {pod.status.pod_ip}") # Авто-маппинг из podIP
+    print(f"Created: {pod.creation_timestamp}") # Преобразовано в datetime
+
 # Масштабирование развертывания
 k8s.deployments.scale('my-deployment', replicas=3, namespace='default')
 

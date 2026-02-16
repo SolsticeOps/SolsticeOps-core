@@ -1003,8 +1003,8 @@ class K8sCLIWrapperTest(TestCase):
         k8s = K8sCLI()
         namespaces = k8s.get_namespaces()
         self.assertEqual(len(namespaces), 2)
-        self.assertIn("default", namespaces)
-        self.assertIn("kube-system", namespaces)
+        self.assertEqual(namespaces[0].name, "default")
+        self.assertEqual(namespaces[1].name, "kube-system")
 
     @patch('core.k8s_cli_wrapper.get_kubeconfig')
     @patch('core.k8s_cli_wrapper.run_command')
@@ -1017,7 +1017,7 @@ class K8sCLIWrapperTest(TestCase):
         pods = k8s.pods.list(namespace="default")
         self.assertEqual(len(pods), 1)
         self.assertEqual(pods[0].name, "pod1")
-        self.assertEqual(pods[0].status, "Running")
+        self.assertEqual(pods[0].status.phase, "Running")
         self.assertEqual(pods[0].namespace, "default")
 
     @patch('core.k8s_cli_wrapper.get_kubeconfig')
