@@ -23,6 +23,12 @@ class K8sObject:
     def __init__(self, attrs):
         self.attrs = attrs
 
+    def _to_camel(self, snake_str):
+        if snake_str == 'cluster_ip': return 'clusterIP'
+        if snake_str == 'target_port': return 'targetPort'
+        components = snake_str.split('_')
+        return components[0] + ''.join(x.title() for x in components[1:])
+
     def __getattr__(self, item):
         try:
             attrs = object.__getattribute__(self, 'attrs')
@@ -35,11 +41,39 @@ class K8sObject:
             return attrs.get('metadata', {}).get('namespace')
         if item == 'uid':
             return attrs.get('metadata', {}).get('uid')
-        
+        if item == 'creation_timestamp':
+            ts = attrs.get('metadata', {}).get('creationTimestamp')
+            if ts:
+                from django.utils.dateparse import parse_datetime
+                return parse_datetime(ts)
+
+        val = None
         if item in attrs:
-            return attrs[item]
+            val = attrs[item]
+        else:
+            camel_item = self._to_camel(item)
+            if camel_item in attrs:
+                val = attrs[camel_item]
+
+        if val is not None:
+            if isinstance(val, dict):
+                return K8sObject(val)
+            if isinstance(val, list):
+                return [K8sObject(x) if isinstance(x, dict) else x for x in val]
+            return val
             
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
+
+    def __getitem__(self, key):
+        try:
+            # Handle numeric indices for lists
+            if isinstance(key, int):
+                val = self.attrs[key]
+                if isinstance(val, dict): return K8sObject(val)
+                return val
+            return self.__getattr__(key)
+        except (AttributeError, IndexError):
+            raise KeyError(key)
 
 class Pod(K8sObject):
     @property

@@ -1074,9 +1074,30 @@ class K8sCLIWrapperTest(TestCase):
     @patch('core.k8s_cli_wrapper.run_command')
     def test_k8s_object_getattr(self, mock_run, mock_config):
         from core.k8s_cli_wrapper import K8sObject
-        obj = K8sObject({"metadata": {"name": "test", "uid": "123"}, "other": "val"})
+        obj = K8sObject({
+            "metadata": {
+                "name": "test", 
+                "uid": "123",
+                "creationTimestamp": "2026-02-16T07:11:00Z"
+            }, 
+            "spec": {
+                "clusterIP": "10.0.0.1"
+            },
+            "status": {
+                "containerStatuses": [
+                    {"restartCount": 5}
+                ]
+            },
+            "other": "val"
+        })
         self.assertEqual(obj.name, "test")
         self.assertEqual(obj.uid, "123")
         self.assertEqual(obj.other, "val")
+        self.assertEqual(obj.spec.cluster_ip, "10.0.0.1")
+        self.assertEqual(obj.status.container_statuses[0].restart_count, 5)
+        
+        from datetime import datetime
+        self.assertIsInstance(obj.creation_timestamp, datetime)
+        
         with self.assertRaises(AttributeError):
             _ = obj.nonexistent
