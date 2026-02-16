@@ -310,14 +310,12 @@
                     </li>
                 </ul>
                 <div class="mt-auto p-4 border-top border-secondary border-opacity-10">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="small fw-semibold text-white">{{ user.username }}</div>
-                        <div class="small text-muted" style="font-size: 10px;">{{ core_version }}</div>
-                    </div>
+                    <div class="small fw-semibold text-white mb-3">{{ user.username }}</div>
                     <form method="post" action="{% url 'logout' %}">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-link p-0 text-secondary text-decoration-none small">Logout</button>
                     </form>
+                    <div class="text-muted mt-4" style="font-size: 10px; opacity: 0.5;">SolsticeOps {{ core_version }}</div>
                 </div>
             </nav>
             {% endif %}
