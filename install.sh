@@ -198,8 +198,10 @@ do_update() {
 
     echo -e "\n${YELLOW}--- Pulling changes from Git ---${NC}"
     git pull
-    # Only update submodules that are already initialized
-    git submodule update --recursive
+    
+    # Try to update submodules, but don't fail if some commits are only local
+    echo -e "${YELLOW}Updating submodules...${NC}"
+    git submodule update --init --recursive || echo -e "${RED}Warning: Some submodules could not be updated from remote. Using local versions.${NC}"
 
     echo -e "\n${YELLOW}--- Updating Dependencies ---${NC}"
     source .venv/bin/activate
