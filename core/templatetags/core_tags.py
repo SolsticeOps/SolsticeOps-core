@@ -1,6 +1,11 @@
 from django import template
+from core.utils import get_primary_ip
 
 register = template.Library()
+
+@register.simple_tag
+def current_primary_ip():
+    return get_primary_ip()
 
 @register.filter
 def divide(value, arg):
