@@ -9,7 +9,7 @@ from django.core.cache import cache
 from core.models import Tool
 from core.plugin_system import plugin_registry, BaseModule
 from core.utils import run_command
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock, mock_open, ANY
 
 User = get_user_model()
 
@@ -978,3 +978,105 @@ class DeploymentTest(TestCase):
     def test_wsgi_application(self):
         from solstice_ops.wsgi import application
         self.assertIsNotNone(application)
+
+class K8sCLIWrapperTest(TestCase):
+    @patch('core.k8s_cli_wrapper.get_kubeconfig')
+    @patch('core.k8s_cli_wrapper.run_command')
+    def test_k8s_info(self, mock_run, mock_config):
+        from core.k8s_cli_wrapper import K8sCLI
+        mock_config.return_value = "/fake/config"
+        mock_run.return_value = b'{"serverVersion": {"gitVersion": "v1.29.0"}}'
+        
+        k8s = K8sCLI()
+        info = k8s.info()
+        self.assertEqual(info['serverVersion']['gitVersion'], "v1.29.0")
+        called_args = mock_run.call_args[0][0]
+        self.assertEqual(called_args[:3], ['kubectl', 'version', '-o'])
+
+    @patch('core.k8s_cli_wrapper.get_kubeconfig')
+    @patch('core.k8s_cli_wrapper.run_command')
+    def test_get_namespaces(self, mock_run, mock_config):
+        from core.k8s_cli_wrapper import K8sCLI
+        mock_config.return_value = "/fake/config"
+        mock_run.return_value = b'{"items": [{"metadata": {"name": "default"}}, {"metadata": {"name": "kube-system"}}]}'
+        
+        k8s = K8sCLI()
+        namespaces = k8s.get_namespaces()
+        self.assertEqual(len(namespaces), 2)
+        self.assertIn("default", namespaces)
+        self.assertIn("kube-system", namespaces)
+
+    @patch('core.k8s_cli_wrapper.get_kubeconfig')
+    @patch('core.k8s_cli_wrapper.run_command')
+    def test_pod_list(self, mock_run, mock_config):
+        from core.k8s_cli_wrapper import K8sCLI
+        mock_config.return_value = "/fake/config"
+        mock_run.return_value = b'{"items": [{"metadata": {"name": "pod1", "namespace": "default"}, "status": {"phase": "Running"}}]}'
+        
+        k8s = K8sCLI()
+        pods = k8s.pods.list(namespace="default")
+        self.assertEqual(len(pods), 1)
+        self.assertEqual(pods[0].name, "pod1")
+        self.assertEqual(pods[0].status, "Running")
+        self.assertEqual(pods[0].namespace, "default")
+
+    @patch('core.k8s_cli_wrapper.get_kubeconfig')
+    @patch('core.k8s_cli_wrapper.run_command')
+    def test_deployment_methods(self, mock_run, mock_config):
+        from core.k8s_cli_wrapper import K8sCLI
+        mock_config.return_value = "/fake/config"
+        mock_run.return_value = b'{"metadata": {"name": "deploy1"}, "spec": {"replicas": 2}}'
+        
+        k8s = K8sCLI()
+        deploy = k8s.deployments.get("deploy1", namespace="default")
+        self.assertEqual(deploy.name, "deploy1")
+        self.assertEqual(deploy.replicas, 2)
+
+        k8s.deployments.scale("deploy1", replicas=3, namespace="default")
+        mock_run.assert_called_with(['kubectl', 'scale', 'deployment', 'deploy1', '--replicas=3', '-n', 'default'], env=ANY)
+        
+        k8s.deployments.restart("deploy1", namespace="default")
+        mock_run.assert_called_with(['kubectl', 'rollout', 'restart', 'deployment', 'deploy1', '-n', 'default'], env=ANY)
+
+    @patch('core.k8s_cli_wrapper.get_kubeconfig')
+    @patch('core.k8s_cli_wrapper.run_command')
+    def test_pod_logs(self, mock_run, mock_config):
+        from core.k8s_cli_wrapper import Pod
+        mock_config.return_value = "/fake/config"
+        mock_run.return_value = b"some logs"
+        
+        pod = Pod({"metadata": {"name": "pod1", "namespace": "default"}})
+        logs = pod.logs(tail=10, timestamps=True)
+        self.assertEqual(logs, b"some logs")
+        mock_run.assert_called_with(['kubectl', 'logs', 'pod1', '-n', 'default', '--tail', '10', '--timestamps'], env=ANY)
+
+    @patch('core.k8s_cli_wrapper.get_kubeconfig')
+    @patch('core.k8s_cli_wrapper.run_command')
+    def test_k8s_get_context(self, mock_run, mock_config):
+        from core.k8s_cli_wrapper import K8sCLI
+        mock_config.return_value = "/fake/config"
+        mock_run.return_value = b"kubernetes-admin@kubernetes"
+        
+        k8s = K8sCLI()
+        context = k8s.get_context()
+        self.assertEqual(context, "kubernetes-admin@kubernetes")
+
+    @patch('core.k8s_cli_wrapper.get_kubeconfig')
+    @patch('core.k8s_cli_wrapper.run_command')
+    def test_manager_delete(self, mock_run, mock_config):
+        from core.k8s_cli_wrapper import K8sCLI
+        mock_config.return_value = "/fake/config"
+        k8s = K8sCLI()
+        k8s.pods.delete("pod1", namespace="default")
+        mock_run.assert_called_with(['kubectl', 'delete', 'pod', 'pod1', '-n', 'default'], env=ANY)
+
+    @patch('core.k8s_cli_wrapper.get_kubeconfig')
+    @patch('core.k8s_cli_wrapper.run_command')
+    def test_k8s_object_getattr(self, mock_run, mock_config):
+        from core.k8s_cli_wrapper import K8sObject
+        obj = K8sObject({"metadata": {"name": "test", "uid": "123"}, "other": "val"})
+        self.assertEqual(obj.name, "test")
+        self.assertEqual(obj.uid, "123")
+        self.assertEqual(obj.other, "val")
+        with self.assertRaises(AttributeError):
+            _ = obj.nonexistent

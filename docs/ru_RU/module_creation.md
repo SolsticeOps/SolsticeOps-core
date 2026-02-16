@@ -242,6 +242,31 @@ client.containers.run(
 )
 ```
 
+### Интеграция с Kubernetes
+
+Аналогично Docker, вы можете использовать обертку `K8sCLI` для взаимодействия с кластером Kubernetes, которая использует `kubectl` внутри.
+
+```python
+from core.k8s_cli_wrapper import K8sCLI
+
+k8s = K8sCLI()
+
+# Список подов во всех пространствах имен
+pods = k8s.pods.list(all_namespaces=True)
+
+# Список развертываний в конкретном пространстве имен
+deployments = k8s.deployments.list(namespace='default')
+
+# Масштабирование развертывания
+k8s.deployments.scale('my-deployment', replicas=3, namespace='default')
+
+# Перезапуск развертывания (rollout restart)
+k8s.deployments.restart('my-deployment', namespace='default')
+
+# Получение текущего контекста
+context = k8s.get_context()
+```
+
 #### Статус и действия для Docker-контейнеров
 Если ваш модуль основан на Docker-контейнере, вам следует переопределить методы сервиса для использования `DockerCLI` вместо `systemctl`.
 

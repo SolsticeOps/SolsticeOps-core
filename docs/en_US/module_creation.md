@@ -242,6 +242,31 @@ client.containers.run(
 )
 ```
 
+### Kubernetes Integration
+
+Similarly to Docker, you can use the `K8sCLI` wrapper to interact with a Kubernetes cluster using `kubectl` under the hood.
+
+```python
+from core.k8s_cli_wrapper import K8sCLI
+
+k8s = K8sCLI()
+
+# List pods in all namespaces
+pods = k8s.pods.list(all_namespaces=True)
+
+# List deployments in a specific namespace
+deployments = k8s.deployments.list(namespace='default')
+
+# Scale a deployment
+k8s.deployments.scale('my-deployment', replicas=3, namespace='default')
+
+# Restart a deployment (rollout restart)
+k8s.deployments.restart('my-deployment', namespace='default')
+
+# Get current context
+context = k8s.get_context()
+```
+
 #### Docker-based Service Status and Actions
 When your module is based on a Docker container, you should override the service methods to use the `DockerCLI` instead of `systemctl`.
 
