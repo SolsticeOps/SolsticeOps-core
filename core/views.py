@@ -82,12 +82,17 @@ def get_server_stats():
     
     # Disk segments (partitions)
     disks = []
+    seen_devices = set()
     for part in psutil.disk_partitions(all=False):
         if os.name == 'nt' and ('cdrom' in part.opts or part.fstype == ''):
             continue
         # Filter out loop devices
         if part.device.startswith('/dev/loop'):
             continue
+        # Filter out duplicate devices
+        if part.device in seen_devices:
+            continue
+            
         try:
             usage = psutil.disk_usage(part.mountpoint)
             disks.append({
@@ -96,6 +101,7 @@ def get_server_stats():
                 'percent': usage.percent,
                 'total_gb': round(usage.total / (1024**3), 1)
             })
+            seen_devices.add(part.device)
         except PermissionError:
             continue
 

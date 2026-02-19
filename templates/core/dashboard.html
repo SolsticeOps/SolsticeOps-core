@@ -46,14 +46,6 @@
                                 <th class="text-muted fw-normal">Total RAM</th>
                                 <td>{{ server_info.ram_total }} GB</td>
                             </tr>
-                            <tr>
-                                <th class="text-muted fw-normal">Motherboard</th>
-                                <td>{{ server_info.motherboard }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-muted fw-normal">Primary IP</th>
-                                <td class="fw-bold text-primary">{% current_primary_ip %}</td>
-                            </tr>
                             {% if server_info.ram_slots %}
                             <tr>
                                 <th class="text-muted fw-normal">RAM Slots</th>
@@ -64,6 +56,14 @@
                                 </td>
                             </tr>
                             {% endif %}
+                            <tr>
+                                <th class="text-muted fw-normal">Primary IP</th>
+                                <td class="fw-bold text-primary">{% current_primary_ip %}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted fw-normal">Motherboard</th>
+                                <td>{{ server_info.motherboard }}</td>
+                            </tr>
                         </table>
                     </div>
 
