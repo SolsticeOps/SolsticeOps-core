@@ -121,7 +121,7 @@
                          hx-get="{{ tab.hx_get }}" 
                          hx-trigger="{{ tab.hx_auto_refresh }}" 
                          hx-swap="morph"
-                         hx-include="[id='{{ tab.id }}'] input, [id='{{ tab.id }}'] select"
+                         hx-include="[id='{{ tab.id }}'] input, [id='{{ tab.id }}'] select, .card-header input[name='search'], .card-header select"
                          {% endif %}>
                         {% if tab.template %}
                             {% include tab.template %}

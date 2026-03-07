@@ -1,11 +1,11 @@
 {% if pagination.total_pages > 1 or show_per_page_select %}
-<div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-secondary border-opacity-10">
+<div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-secondary border-opacity-10 px-3 pb-3">
     <div class="d-flex align-items-center gap-3">
         {% if show_per_page_select %}
         <div class="d-flex align-items-center gap-2">
-            <span class="x-small text-muted text-uppercase fw-bold">Show:</span>
-            <select class="form-select form-select-sm border-secondary x-small py-0" 
-                    style="width: 70px; height: 24px;"
+            <span class="x-small text-muted text-uppercase fw-bold" style="font-size: 10px;">Show:</span>
+            <select class="form-select form-select-sm border-secondary x-small py-0 px-2" 
+                    style="width: 60px; height: 22px; font-size: 10px; min-height: auto;"
                     name="per_page"
                     hx-get="{{ base_url }}"
                     hx-trigger="change"
