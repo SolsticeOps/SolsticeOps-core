@@ -104,12 +104,22 @@ class SystemSession(TerminalSession):
         env = os.environ.copy()
         env['TERM'] = 'xterm-256color'
         env['COLORTERM'] = 'truecolor'
+        
+        # Check if guest user exists
+        try:
+            subprocess.run(['id', '-u', 'guest'], check=True, capture_output=True)
+            cmd = ['su', '-', 'guest', '-s', '/bin/bash']
+        except subprocess.CalledProcessError:
+            # Fallback to bash if guest doesn't exist (e.g. during dev)
+            cmd = ['/bin/bash', '--login']
+
         self.process = subprocess.Popen(
-            ['/bin/bash', '--login'], preexec_fn=os.setsid, stdin=self.slave_fd, stdout=self.slave_fd, stderr=self.slave_fd,
+            cmd, preexec_fn=os.setsid, stdin=self.slave_fd, stdout=self.slave_fd, stderr=self.slave_fd,
             universal_newlines=False, env=env
         )
         # Close slave_fd in parent process to avoid hanging on read
         os.close(self.slave_fd)
+
 
     def run(self):
         import sys

@@ -5,7 +5,13 @@ from .plugin_system import plugin_registry
 
 class TerminalConsumer(WebsocketConsumer):
     def connect(self):
+        user = self.scope.get('user')
+        if not user or not user.is_authenticated or not user.can_manage_infrastructure:
+            self.close()
+            return
+
         self.session_type = self.scope['url_route']['kwargs'].get('session_type', 'system')
+
         self.kwargs = self.scope['url_route']['kwargs'].copy()
         # Remove session_type from kwargs as it's not needed for session initialization
         self.kwargs.pop('session_type', None)

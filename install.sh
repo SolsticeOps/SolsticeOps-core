@@ -154,7 +154,14 @@ EOF
     echo -e "\n${YELLOW}--- Creating Admin User ---${NC}"
     python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='$ADMIN_USER').delete(); User.objects.create_superuser('$ADMIN_USER', 'admin@example.com', '$ADMIN_PASS')"
 
+    echo -e "\n${YELLOW}--- Creating Guest System User ---${NC}"
+    if ! id -u guest >/dev/null 2>&1; then
+        useradd -m -s /bin/bash guest
+        echo "guest:guest" | chpasswd
+    fi
+
     # 9. Systemd service
+
     echo -e "\n${YELLOW}--- Creating Systemd Service ---${NC}"
     cat > "$SERVICE_FILE" <<EOF
 [Unit]
