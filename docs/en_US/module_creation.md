@@ -87,6 +87,32 @@ def service_restart(self, tool):
     run_command(["systemctl", "restart", "my-service"])
 ```
 
+**Service Update:**
+Implement the `update` method to handle service updates (e.g., pulling the latest binary or updating a configuration). If this method is implemented, an **Update** button will automatically appear in the Service Management block.
+
+```python
+def update(self, request, tool):
+    tool.status = 'installing'
+    tool.current_stage = "Updating service..."
+    tool.save()
+
+    def run_update():
+        try:
+            # Perform update logic (e.g., run an update script)
+            from core.utils import run_command
+            run_command("curl -fsSL https://example.com/update.sh | sh", shell=True)
+            
+            tool.status = 'installed'
+            tool.current_stage = "Update completed"
+        except Exception as e:
+            tool.status = 'error'
+            tool.config_data['error_log'] = str(e)
+        tool.save()
+
+    import threading
+    threading.Thread(target=run_update).start()
+```
+
 #### 3. Resource Tabs
 Define tabs that appear on the detail page. These usually load content via HTMX:
 ```python

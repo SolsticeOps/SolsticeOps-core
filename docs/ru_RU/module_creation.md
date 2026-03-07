@@ -87,6 +87,32 @@ def service_restart(self, tool):
     run_command(["systemctl", "restart", "my-service"])
 ```
 
+**Обновление сервиса:**
+Реализуйте метод `update`, чтобы обрабатывать обновление самого сервиса (например, загрузку последнего бинарного файла или обновление конфигурации). Если этот метод реализован, в блоке управления сервисом (Service Management) автоматически появится кнопка **Update**.
+
+```python
+def update(self, request, tool):
+    tool.status = 'installing'
+    tool.current_stage = "Обновление сервиса..."
+    tool.save()
+
+    def run_update():
+        try:
+            # Логика обновления (например, запуск скрипта обновления)
+            from core.utils import run_command
+            run_command("curl -fsSL https://example.com/update.sh | sh", shell=True)
+            
+            tool.status = 'installed'
+            tool.current_stage = "Обновление завершено"
+        except Exception as e:
+            tool.status = 'error'
+            tool.config_data['error_log'] = str(e)
+        tool.save()
+
+    import threading
+    threading.Thread(target=run_update).start()
+```
+
 #### 3. Вкладки ресурсов
 Определите вкладки, которые появятся на странице деталей. Обычно они загружают контент через HTMX:
 ```python
