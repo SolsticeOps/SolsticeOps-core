@@ -49,6 +49,10 @@
                                 <a href="{% url 'tool_action' tool.name 'stop' %}" class="btn btn-outline-warning btn-sm d-flex align-items-center gap-2"><i class="bi bi-pause-fill"></i> Stop</a>
                                 <a href="{% url 'tool_action' tool.name 'restart' %}" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"><i class="bi bi-arrow-clockwise"></i> Restart</a>
                                 
+                                {% if module.can_update %}
+                                <a href="{% url 'tool_action' tool.name 'update' %}" class="btn btn-outline-info btn-sm d-flex align-items-center gap-2"><i class="bi bi-cloud-arrow-up"></i> Update</a>
+                                {% endif %}
+
                                 {% load core_tags %}
                                 {% call_method module "get_logs_url" tool as logs_url %}
                                 {% if logs_url %}

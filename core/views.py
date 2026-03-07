@@ -225,9 +225,16 @@ def tool_action(request, tool_name, action):
     tool = get_object_or_404(Tool, name=tool_name)
     module = plugin_registry.get_module(tool.name)
     
-    if action not in ['start', 'stop', 'restart']:
+    if action not in ['start', 'stop', 'restart', 'update']:
         return HttpResponse("Invalid action", status=400)
     
+    if action == 'update':
+        if module and hasattr(module, 'update'):
+            module.update(request, tool)
+            return redirect('tool_detail', tool_name=tool_name)
+        else:
+            return HttpResponse("Update not supported for this module", status=400)
+
     # Try to execute action via module if it has custom implementation
     action_method_name = f"service_{action}"
     if module and hasattr(module, action_method_name):

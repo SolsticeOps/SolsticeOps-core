@@ -80,6 +80,16 @@ class BaseModule(ABC):
         """Return the status of the service (e.g., 'running', 'stopped', 'error')."""
         return 'running'
 
+    def update(self, request, tool):
+        """Execute service update logic."""
+        pass
+
+    @property
+    def can_update(self):
+        """Return True if the module implements an update method."""
+        # Check if the 'update' method is overridden in the subclass
+        return self.__class__.update != BaseModule.update
+
     def handle_hx_request(self, request, tool, target):
         """Handle HTMX requests for this module."""
         return None
@@ -105,8 +115,12 @@ class ModuleRegistry:
 
     def register(self, module_class):
         module = module_class()
-        self.modules[module.module_id] = module
-        logger.info(f"Registered module: {module.module_id}")
+        if module.module_id not in self.modules:
+            self.modules[module.module_id] = module
+            logger.info(f"Registered module: {module.module_id}")
+        else:
+            # Update existing instance if needed, but don't log
+            self.modules[module.module_id] = module
 
     def get_module(self, module_id):
         return self.modules.get(module_id)
@@ -114,10 +128,17 @@ class ModuleRegistry:
     def get_all_modules(self):
         return self.modules.values()
 
-    def discover_modules(self):
+    def discover_modules(self, force=False):
         """Discover modules in the 'modules' directory."""
         import sys
         import importlib
+        import time
+        
+        # Avoid redundant discovery unless forced
+        if not force and hasattr(self, '_last_discovery'):
+            if time.time() - self._last_discovery < 10: # 10 seconds cooldown
+                return
+        
         importlib.invalidate_caches()
         
         modules_dir = os.path.join(settings.BASE_DIR, 'modules')
@@ -130,7 +151,13 @@ class ModuleRegistry:
             if os.path.isdir(item_path) and os.path.exists(os.path.join(item_path, '__init__.py')):
                 try:
                     # Try to import 'module' from the package
-                    module_pkg = importlib.import_module(f'modules.{item}.module')
+                    # Use a unique name to allow re-importing if needed, but usually we just want to load it
+                    module_name = f'modules.{item}.module'
+                    if module_name in sys.modules:
+                        module_pkg = importlib.reload(sys.modules[module_name])
+                    else:
+                        module_pkg = importlib.import_module(module_name)
+                        
                     if hasattr(module_pkg, 'Module'):
                         self.register(module_pkg.Module)
                 except Exception as e:
@@ -139,6 +166,8 @@ class ModuleRegistry:
                         pass
                     else:
                         logger.error(f"Failed to load module {item}: {e}")
+        
+        self._last_discovery = time.time()
 
     def sync_tools_with_db(self, force=False):
         """Ensure all discovered modules have a corresponding Tool record in the DB."""
