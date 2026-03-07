@@ -166,7 +166,7 @@ User=root
 Group=root
 WorkingDirectory=$INSTALL_DIR
 Environment="PATH=$INSTALL_DIR/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-ExecStart=$INSTALL_DIR/.venv/bin/python $INSTALL_DIR/manage.py runserver 0.0.0.0:$PANEL_PORT
+ExecStart=$INSTALL_DIR/.venv/bin/python -m daphne -b 0.0.0.0 -p $PANEL_PORT solstice_ops.asgi:application --application-close-timeout 0
 Restart=always
 
 [Install]

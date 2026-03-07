@@ -14,7 +14,7 @@ from django.core.cache import cache
 from django.conf import settings
 from .models import Tool
 from .plugin_system import plugin_registry
-from .utils import run_command
+from .utils import run_command, devops_admin_required
 
 logger = logging.getLogger(__name__)
 
@@ -211,6 +211,7 @@ def tool_detail(request, tool_name):
     return render(request, 'core/tool_detail.html', context)
 
 @login_required
+@devops_admin_required
 def install_tool(request, tool_name):
     tool = get_object_or_404(Tool, name=tool_name)
     module = plugin_registry.get_module(tool.name)
@@ -221,6 +222,7 @@ def install_tool(request, tool_name):
     return redirect('tool_detail', tool_name=tool_name)
 
 @login_required
+@devops_admin_required
 def tool_action(request, tool_name, action):
     tool = get_object_or_404(Tool, name=tool_name)
     module = plugin_registry.get_module(tool.name)
@@ -255,6 +257,7 @@ def tool_action(request, tool_name, action):
     return redirect('tool_detail', tool_name=tool_name)
 
 @login_required
+@devops_admin_required
 def add_module(request):
     if request.method == 'POST':
         repo_url = request.POST.get('repo_url')

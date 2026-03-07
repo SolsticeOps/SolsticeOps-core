@@ -1,0 +1,68 @@
+{% if pagination.total_pages > 1 or show_per_page_select %}
+<div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-secondary border-opacity-10">
+    <div class="d-flex align-items-center gap-3">
+        {% if show_per_page_select %}
+        <div class="d-flex align-items-center gap-2">
+            <span class="x-small text-muted text-uppercase fw-bold">Show:</span>
+            <select class="form-select form-select-sm border-secondary x-small py-0" 
+                    style="width: 70px; height: 24px;"
+                    name="per_page"
+                    hx-get="{{ base_url }}"
+                    hx-trigger="change"
+                    hx-target="{{ target }}"
+                    hx-swap="morph"
+                    hx-include="{{ include_selector|default:'this' }}">
+                <option value="5" {% if pagination.per_page == 5 %}selected{% endif %}>5</option>
+                <option value="10" {% if pagination.per_page == 10 %}selected{% endif %}>10</option>
+                <option value="25" {% if pagination.per_page == 25 %}selected{% endif %}>25</option>
+                <option value="50" {% if pagination.per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if pagination.per_page == 100 %}selected{% endif %}>100</option>
+            </select>
+        </div>
+        {% endif %}
+        <span class="x-small text-muted">
+            Showing {{ pagination.items|length }} of {{ pagination.total_items }} items
+        </span>
+    </div>
+
+    {% if pagination.total_pages > 1 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <button class="page-link border-secondary" 
+                        hx-get="{{ base_url }}{% if '?' in base_url %}&{% else %}?{% endif %}page={{ pagination.prev_page }}" 
+                        hx-target="{{ target }}"
+                        hx-swap="morph"
+                        hx-include="{{ include_selector|default:'this' }}">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+            </li>
+            
+            {% for p in "x"|rjust:pagination.total_pages %}
+                {% with page_num=forloop.counter %}
+                <li class="page-item {% if pagination.page == page_num %}active{% endif %}">
+                    <button class="page-link border-secondary" 
+                            hx-get="{{ base_url }}{% if '?' in base_url %}&{% else %}?{% endif %}page={{ page_num }}" 
+                            hx-target="{{ target }}"
+                            hx-swap="morph"
+                            hx-include="{{ include_selector|default:'this' }}">
+                        {{ page_num }}
+                    </button>
+                </li>
+                {% endwith %}
+            {% endfor %}
+
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <button class="page-link border-secondary" 
+                        hx-get="{{ base_url }}{% if '?' in base_url %}&{% else %}?{% endif %}page={{ pagination.next_page }}" 
+                        hx-target="{{ target }}"
+                        hx-swap="morph"
+                        hx-include="{{ include_selector|default:'this' }}">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endif %}

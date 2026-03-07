@@ -6,6 +6,11 @@ class User(AbstractUser):
     """Custom user model for SolsticeOps."""
     is_devops_admin = models.BooleanField(default=False)
     
+    @property
+    def can_manage_infrastructure(self):
+        """Returns True if the user has administrative privileges for infrastructure."""
+        return self.is_devops_admin or self.is_staff or self.is_superuser
+
     def __str__(self):
         return self.username
 

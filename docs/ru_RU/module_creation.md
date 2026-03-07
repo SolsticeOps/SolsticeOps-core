@@ -113,6 +113,75 @@ def update(self, request, tool):
     threading.Thread(target=run_update).start()
 ```
 
+### Роли и права доступа
+
+SolsticeOps включает систему управления доступом на основе ролей. По умолчанию пользователи имеют доступ только для чтения. Административные действия должны быть ограничены пользователями с ролью "DevOps Admin" или системными администраторами (staff/superuser).
+
+#### 1. Защита представлений (Views)
+Используйте декоратор `@devops_admin_required` для защиты представлений, которые выполняют деструктивные действия или изменяют конфигурацию:
+
+```python
+from django.contrib.auth.decorators import login_required
+from core.utils import devops_admin_required
+
+@login_required
+@devops_admin_required
+def my_destructive_action(request):
+    # Только администраторы могут выполнить это действие
+    pass
+```
+
+#### 2. Условная отрисовка UI
+Проверяйте права доступа в шаблонах, используя `user.can_manage_infrastructure`:
+
+```html
+{% if user.can_manage_infrastructure %}
+    <button class="btn btn-danger">Удалить ресурс</button>
+{% endif %}
+```
+
+### Поиск и пагинация
+
+Для модулей с большим количеством объектов (например, контейнеров, моделей, файлов) используйте встроенную утилиту `paginate_list` и стандартный фрагмент пагинации.
+
+#### 1. В `module.py` или `views.py`
+```python
+from core.utils import paginate_list
+
+def get_context_data(self, request, tool):
+    # ... получение ваших элементов ...
+    search_query = request.GET.get('search', '')
+    page = request.GET.get('page', 1)
+    per_page = request.GET.get('per_page', 10)
+    
+    pagination = paginate_list(
+        my_items, 
+        page, 
+        per_page, 
+        search_query=search_query, 
+        search_fields=['name', 'description']
+    )
+    
+    return {
+        'items': pagination['items'],
+        'pagination': pagination,
+        'search_query': search_query
+    }
+```
+
+#### 2. В шаблоне
+```html
+<!-- Поле поиска -->
+<input type="text" name="search" value="{{ search_query }}" 
+       hx-get="{% url '...' %}" hx-trigger="keyup changed delay:500ms" hx-target="#..." hx-swap="outerHTML">
+
+<!-- Список элементов -->
+{% for item in items %} ... {% endfor %}
+
+<!-- Управление пагинацией -->
+{% include 'core/partials/pagination.html' with pagination=pagination base_url="/tool/my-module/?tab=..." target="#..." show_per_page_select=True include_selector="#... input[name='search']" %}
+```
+
 #### 3. Вкладки ресурсов
 Определите вкладки, которые появятся на странице деталей. Обычно они загружают контент через HTMX:
 ```python

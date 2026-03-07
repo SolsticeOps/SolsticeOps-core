@@ -113,6 +113,75 @@ def update(self, request, tool):
     threading.Thread(target=run_update).start()
 ```
 
+### Roles and Permissions
+
+SolsticeOps features a role-based access control system. By default, users have read-only access. Administrative actions should be restricted to users with the "DevOps Admin" role or system administrators (staff/superuser).
+
+#### 1. Protecting Views
+Use the `@devops_admin_required` decorator to protect views that perform destructive or configuration actions:
+
+```python
+from django.contrib.auth.decorators import login_required
+from core.utils import devops_admin_required
+
+@login_required
+@devops_admin_required
+def my_destructive_action(request):
+    # Only admins can reach this
+    pass
+```
+
+#### 2. UI Conditional Rendering
+Check for permissions in templates using `user.can_manage_infrastructure`:
+
+```html
+{% if user.can_manage_infrastructure %}
+    <button class="btn btn-danger">Delete Resource</button>
+{% endif %}
+```
+
+### Search and Pagination
+
+For modules with many objects (e.g., containers, models, files), use the built-in `paginate_list` utility and the standard pagination partial.
+
+#### 1. In `module.py` or `views.py`
+```python
+from core.utils import paginate_list
+
+def get_context_data(self, request, tool):
+    # ... fetch your items ...
+    search_query = request.GET.get('search', '')
+    page = request.GET.get('page', 1)
+    per_page = request.GET.get('per_page', 10)
+    
+    pagination = paginate_list(
+        my_items, 
+        page, 
+        per_page, 
+        search_query=search_query, 
+        search_fields=['name', 'description']
+    )
+    
+    return {
+        'items': pagination['items'],
+        'pagination': pagination,
+        'search_query': search_query
+    }
+```
+
+#### 2. In the template
+```html
+<!-- Search Input -->
+<input type="text" name="search" value="{{ search_query }}" 
+       hx-get="{% url '...' %}" hx-trigger="keyup changed delay:500ms" hx-target="#..." hx-swap="outerHTML">
+
+<!-- Items List -->
+{% for item in items %} ... {% endfor %}
+
+<!-- Pagination Controls -->
+{% include 'core/partials/pagination.html' with pagination=pagination base_url="/tool/my-module/?tab=..." target="#..." show_per_page_select=True include_selector="#... input[name='search']" %}
+```
+
 #### 3. Resource Tabs
 Define tabs that appear on the detail page. These usually load content via HTMX:
 ```python
