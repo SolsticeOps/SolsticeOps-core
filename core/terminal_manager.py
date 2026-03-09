@@ -80,6 +80,10 @@ class TerminalSession:
                 
             self.keep_running = True
             try:
+                # Re-setup with original init args
+                if hasattr(self, '_init_args'):
+                    for k, v in self._init_args.items():
+                        setattr(self, k, v)
                 self._setup_session()
                 # We need to replace the thread reference
                 self.thread = threading.Thread(target=self.run, daemon=True)
@@ -94,9 +98,10 @@ class TerminalSession:
         threading.Thread(target=_do_restart, daemon=True).start()
 
 class SystemSession(TerminalSession):
-    def __init__(self):
+    def __init__(self, is_admin=False):
         super().__init__()
-        self._init_args = {}
+        self._init_args = {'is_admin': is_admin}
+        self.is_admin = is_admin
         self._setup_session()
 
     def _setup_session(self):
@@ -105,16 +110,33 @@ class SystemSession(TerminalSession):
         env['TERM'] = 'xterm-256color'
         env['COLORTERM'] = 'truecolor'
         
-        # Check if guest user exists
-        try:
-            subprocess.run(['id', '-u', 'guest'], check=True, capture_output=True)
-            cmd = ['su', '-', 'guest', '-s', '/bin/bash']
-        except subprocess.CalledProcessError:
-            # Fallback to bash if guest doesn't exist (e.g. during dev)
+        # Determine user
+        if self.is_admin:
+            # Admins get root access (assuming the app runs as root)
             cmd = ['/bin/bash', '--login']
+        else:
+            # Check if guest user exists
+            try:
+                subprocess.run(['id', '-u', 'guest'], check=True, capture_output=True)
+                cmd = ['su', '-', 'guest', '-s', '/bin/bash']
+            except subprocess.CalledProcessError:
+                # Fallback to bash if guest doesn't exist (e.g. during dev)
+                cmd = ['/bin/bash', '--login']
+
+        def preexec():
+            # Set the controlling terminal for the child process
+            # This is essential for job control (ctrl+c, etc.) and to avoid
+            # "-bash: cannot set terminal process group" errors
+            import fcntl, termios
+            os.setsid()
+            try:
+                # The slave_fd is now stdin (0) in the child
+                fcntl.ioctl(0, termios.TIOCSCTTY, 0)
+            except:
+                pass
 
         self.process = subprocess.Popen(
-            cmd, preexec_fn=os.setsid, stdin=self.slave_fd, stdout=self.slave_fd, stderr=self.slave_fd,
+            cmd, preexec_fn=preexec, stdin=self.slave_fd, stdout=self.slave_fd, stderr=self.slave_fd,
             universal_newlines=False, env=env
         )
         # Close slave_fd in parent process to avoid hanging on read
@@ -214,7 +236,8 @@ class TerminalManager:
 
             if session_id not in self.sessions:
                 if session_type == 'system':
-                    session = SystemSession()
+                    is_admin = kwargs.get('is_admin', False)
+                    session = SystemSession(is_admin=is_admin)
                 else:
                     # Check registered modules for session types
                     session_class = None

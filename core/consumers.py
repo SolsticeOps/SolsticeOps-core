@@ -6,18 +6,25 @@ from .plugin_system import plugin_registry
 class TerminalConsumer(WebsocketConsumer):
     def connect(self):
         user = self.scope.get('user')
-        if not user or not user.is_authenticated or not user.can_manage_infrastructure:
+        if not user or not user.is_authenticated:
             self.close()
             return
 
         self.session_type = self.scope['url_route']['kwargs'].get('session_type', 'system')
+        
+        # Only admins can access module-specific shells (docker, k8s, etc.)
+        if self.session_type != 'system' and not user.can_manage_infrastructure:
+            self.close()
+            return
 
         self.kwargs = self.scope['url_route']['kwargs'].copy()
         # Remove session_type from kwargs as it's not needed for session initialization
         self.kwargs.pop('session_type', None)
         
         if self.session_type == 'system':
-            self.session_id = "system_shell"
+            # Use unique session ID per user for system shell to maintain isolation
+            self.session_id = f"system_shell_{user.id}"
+            self.kwargs['is_admin'] = user.can_manage_infrastructure
         else:
             # Generate a unique session ID based on session type and all kwargs
             sorted_kwargs = sorted(self.kwargs.items())

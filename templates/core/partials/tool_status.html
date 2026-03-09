@@ -16,24 +16,16 @@
         
         {% if install_template %}
             <p class="text-muted">This service is not yet configured on your server. Configure and install it below.</p>
-            {% if user.can_manage_infrastructure %}
+            <div class="{% if not user.can_manage_infrastructure %}opacity-50 pointer-events-none{% endif %}">
                 {% include install_template %}
-            {% else %}
-                <div class="alert alert-light border-0 bg-light bg-opacity-50 small mb-0">
-                    <i class="bi bi-info-circle me-2"></i> Installation is restricted to DevOps Admins.
-                </div>
-            {% endif %}
+            </div>
         {% else %}
             <p class="text-muted">This service is not yet configured on your server. Click the button below to start the installation process.</p>
-            {% if user.can_manage_infrastructure %}
-                <a href="{% url 'install_tool' tool.name %}" class="btn btn-primary btn-lg mt-3 px-5">
-                    <i class="bi bi-download me-2"></i> Install {{ tool.get_name_display }}
-                </a>
-            {% else %}
-                <div class="alert alert-light border-0 bg-light bg-opacity-50 small mb-0">
-                    <i class="bi bi-info-circle me-2"></i> Installation is restricted to DevOps Admins.
-                </div>
-            {% endif %}
+            <a href="{% if user.can_manage_infrastructure %}{% url 'install_tool' tool.name %}{% else %}#{% endif %}" 
+               class="btn btn-primary btn-lg mt-3 px-5 {% if not user.can_manage_infrastructure %}disabled opacity-50{% endif %}"
+               {% if not user.can_manage_infrastructure %}disabled{% endif %}>
+                <i class="bi bi-download me-2"></i> Install {{ tool.get_name_display }}
+            </a>
         {% endif %}
     </div>
     {% elif tool.status == 'installing' %}
@@ -66,7 +58,9 @@
             <pre class="bg-dark text-light p-3 rounded small">{{ tool.config_data.error_log }}</pre>
         </div>
         {% endif %}
-        <a href="{% url 'install_tool' tool.name %}" class="btn btn-danger mt-3">Try Again</a>
+        <a href="{% if user.can_manage_infrastructure %}{% url 'install_tool' tool.name %}{% else %}#{% endif %}" 
+           class="btn btn-danger mt-3 {% if not user.can_manage_infrastructure %}disabled opacity-50{% endif %}"
+           {% if not user.can_manage_infrastructure %}disabled{% endif %}>Try Again</a>
     </div>
     {% elif tool.status == 'installed' %}
     {% if service_status == 'running' %}
