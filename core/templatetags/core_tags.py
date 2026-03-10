@@ -1,7 +1,12 @@
+import json
 from django import template
 from core.utils import get_primary_ip
 
 register = template.Library()
+
+@register.filter
+def jsonify(value):
+    return json.dumps(value)
 
 @register.simple_tag
 def current_primary_ip():
