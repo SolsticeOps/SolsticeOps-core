@@ -130,6 +130,12 @@ def dashboard(request):
             cpu_brand = "Unknown"
     
     hw_sudo = get_hw_info_sudo()
+    
+    # Use background-cached stats if available
+    stats = cache.get('bg_server_stats')
+    if not stats:
+        stats = get_server_stats()
+        
     context = {
         'server_info': {
             'os': platform.system(),
@@ -141,7 +147,7 @@ def dashboard(request):
             'motherboard': hw_sudo['motherboard'],
             'ram_slots': hw_sudo['ram_slots'],
         },
-        'stats': get_server_stats(),
+        'stats': stats,
         'is_login_page': False,
         'is_admin': False
     }
@@ -149,7 +155,10 @@ def dashboard(request):
 
 @login_required
 def server_stats_partial(request):
-    return render(request, 'core/partials/stats.html', {'stats': get_server_stats()})
+    stats = cache.get('bg_server_stats')
+    if not stats:
+        stats = get_server_stats()
+    return render(request, 'core/partials/stats.html', {'stats': stats})
 
 @login_required
 def tool_detail(request, tool_name):
@@ -167,30 +176,46 @@ def tool_detail(request, tool_name):
         target = request.GET.get('tab')
         is_hx = request.headers.get('HX-Request')
         
-        cache_key = f'module_context_{tool.name}_{request.user.id}'
-        if is_hx and target:
-            cache_key += f'_{target}'
-            # For namespace-specific requests
-            namespace = request.GET.get('namespace')
-            if namespace:
-                cache_key += f'_{namespace}'
+        # Check if we should use background-cached data
+        # Only for non-HTMX requests and only if no specific filters are applied
+        use_bg_cache = not is_hx and not request.GET.get('search') and not request.GET.get('page') and not request.GET.get('namespace')
         
-        module_context = cache.get(cache_key)
+        if use_bg_cache:
+            bg_data = cache.get(f'bg_poll_{module.module_id}_{tool.id}')
+            if bg_data:
+                context.update(bg_data['context'])
+                context['service_status'] = bg_data['status']
+                context['is_bg_cached'] = True
+                ts = bg_data.get('timestamp')
+                if ts:
+                    from datetime import datetime
+                    context['bg_timestamp'] = datetime.fromtimestamp(ts)
+        
+        if 'service_status' not in context:
+            cache_key = f'module_context_{tool.name}_{request.user.id}'
+            if is_hx and target:
+                cache_key += f'_{target}'
+                # For namespace-specific requests
+                namespace = request.GET.get('namespace')
+                if namespace:
+                    cache_key += f'_{namespace}'
             
-        if module_context is None:
-            module_context = module.get_context_data(request, tool)
-            try:
-                # Cache for 30s for page loads, 5s for HTMX refreshes
-                ttl = 5 if is_hx else 30
-                cache.set(cache_key, module_context, ttl)
-            except Exception as e:
-                logger.warning(f"Failed to cache module context for {tool.name}: {e}")
-        
-        context.update(module_context)
+            module_context = cache.get(cache_key)
+                
+            if module_context is None:
+                module_context = module.get_context_data(request, tool)
+                try:
+                    # Cache for 30s for page loads, 5s for HTMX refreshes
+                    ttl = 5 if is_hx else 30
+                    cache.set(cache_key, module_context, ttl)
+                except Exception as e:
+                    logger.warning(f"Failed to cache module context for {tool.name}: {e}")
+            
+            context.update(module_context)
 
-        # Update tool status based on actual service status
-        service_status = module.get_service_status(tool)
-        context['service_status'] = service_status
+            # Update tool status based on actual service status
+            service_status = module.get_service_status(tool)
+            context['service_status'] = service_status
         
         # Add dynamic module properties to context
         context['resource_tabs'] = module.get_resource_tabs()

@@ -23,7 +23,18 @@
         </div>
         <div>
             <h1 class="h3 fw-bold mb-0">{{ tool.get_name_display }}</h1>
-            <span class="text-muted small">Service Management & Resource Control</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Service Management & Resource Control</span>
+                {% if is_bg_cached %}
+                <span class="badge bg-body-secondary text-secondary border small fw-normal" 
+                      data-bs-toggle="tooltip"
+                      data-bs-placement="bottom"
+                      title="Last updated: {{ bg_timestamp|date:'H:i:s' }}"
+                      style="font-size: 0.65rem; padding: 0.15rem 0.4rem; cursor: help;">
+                    <i class="bi bi-clock-history me-1"></i> Cached
+                </span>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -203,6 +214,14 @@
                 evt.preventDefault();
             }
         }
+    });
+
+    // Initialize Bootstrap tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
     });
 </script>
 {% endblock %}

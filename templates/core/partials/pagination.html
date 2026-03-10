@@ -30,7 +30,7 @@
         <ul class="pagination pagination-sm mb-0">
             <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
                 <button class="page-link border-secondary" 
-                        hx-get="{{ base_url }}{% if '?' in base_url %}&{% else %}?{% endif %}page={{ pagination.prev_page }}" 
+                        hx-get="{{ base_url }}{% if '?' in base_url %}&{% else %}?{% endif %}page={{ pagination.prev_page }}&per_page={{ pagination.per_page }}" 
                         hx-target="{{ target }}"
                         hx-swap="morph"
                         hx-include="{{ include_selector|default:'this' }}">
@@ -42,7 +42,7 @@
                 {% with page_num=forloop.counter %}
                 <li class="page-item {% if pagination.page == page_num %}active{% endif %}">
                     <button class="page-link border-secondary" 
-                            hx-get="{{ base_url }}{% if '?' in base_url %}&{% else %}?{% endif %}page={{ page_num }}" 
+                            hx-get="{{ base_url }}{% if '?' in base_url %}&{% else %}?{% endif %}page={{ page_num }}&per_page={{ pagination.per_page }}" 
                             hx-target="{{ target }}"
                             hx-swap="morph"
                             hx-include="{{ include_selector|default:'this' }}">
@@ -54,7 +54,7 @@
 
             <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
                 <button class="page-link border-secondary" 
-                        hx-get="{{ base_url }}{% if '?' in base_url %}&{% else %}?{% endif %}page={{ pagination.next_page }}" 
+                        hx-get="{{ base_url }}{% if '?' in base_url %}&{% else %}?{% endif %}page={{ pagination.next_page }}&per_page={{ pagination.per_page }}" 
                         hx-target="{{ target }}"
                         hx-swap="morph"
                         hx-include="{{ include_selector|default:'this' }}">

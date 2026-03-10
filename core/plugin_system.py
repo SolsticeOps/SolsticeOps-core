@@ -72,7 +72,29 @@ class BaseModule(ABC):
         """Return a list of resource tabs: [{'id': '...', 'label': '...', 'template': '...', 'hx_get': '...', 'hx_auto_refresh': '...'}]"""
         return []
 
-    def get_context_data(self, request, tool):
+    def background_poll(self, tool):
+        """
+        Execute background polling for this module and return context data.
+        Default implementation calls get_context_data(None, tool) and get_service_status(tool).
+        """
+        from django.core.cache import cache
+        
+        status = self.get_service_status(tool)
+        # Force refresh raw data in background
+        context = self.get_context_data(None, tool, force_refresh=True)
+        
+        data = {
+            'status': status,
+            'context': context,
+            'timestamp': __import__('time').time()
+        }
+        
+        # Cache for 1 hour, but background worker should update it more frequently
+        cache_key = f'bg_poll_{self.module_id}_{tool.id}'
+        cache.set(cache_key, data, 3600)
+        return data
+
+    def get_context_data(self, request, tool, force_refresh=False):
         """Return additional context data for the tool detail view."""
         return {}
 
